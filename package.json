@@ -1,0 +1,67 @@
+{
+	"name": "nix-env-selector",
+	"displayName": "nix-env-selector",
+	"description": "Allows switch environment for Visual Studio Code and extensions based on Nix config file.",
+	"version": "0.0.1",
+	"keywords": ["nix", "nix-env", "nix-shell", "vscode"],
+	"license": "MIT",
+	"author": {
+		"name": "Roman Valihura",
+		"email": "roman.valihura@gmail.com"
+	},
+	"icon": "resources/icon.png",
+	"engines": {
+		"vscode": "^1.38.0"
+	},
+	"repository": {
+		"type" : "git",
+		"url" : "https://github.com/arrterian/nix-env-selector.git"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"*"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"configuration": {
+      "title": "Nix Environment Selector",
+      "properties": {
+        "nixEnvSelector.nixShellConfig": {
+          "type": "string",
+          "default": null,
+          "description": "Path for nix-shell config"
+        }
+      }
+    },
+		"commands": [
+			{
+				"command": "extension.selectEnv",
+				"title": "Nix-Env: Select environment"
+			}
+		]
+	},
+	"scripts": {
+		"vscode:prepublish": "yarn run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"pretest": "yarn run compile",
+		"test": "node ./out/test/runTest.js"
+	},
+	"devDependencies": {
+		"@types/glob": "^7.1.1",
+		"@types/mocha": "^5.2.6",
+		"@types/node": "^10.12.21",
+		"@types/vscode": "^1.38.0",
+		"@types/dotenv": "^6.1.1",
+		"glob": "^7.1.4",
+		"mocha": "^6.1.4",
+		"tslint": "^5.12.1",
+		"typescript": "^3.3.1",
+		"vscode-test": "^1.2.0"
+	},
+	"dependencies": {
+		"dotenv": "^8.1.0"
+	}
+}
