@@ -24,6 +24,7 @@ const getNixEnvList = (dirPath: string) =>
 
 export function activate(context: vscode.ExtensionContext) {
   // TODO: make proper subscription event or when restriction
+  let nixConfigPath: string;
   if (!vscode.workspace.rootPath) {
     return;
   }
@@ -38,32 +39,31 @@ export function activate(context: vscode.ExtensionContext) {
 
   const nixConfigPathTemplate = config.get<string>(SELECTED_ENV_CONFIG_KEY);
 
-  if (!nixConfigPathTemplate && nixConfigPathTemplate !== NOT_MODIFIED_ENV) {
-    return getNixEnvList(appRoot)
+  if (!nixConfigPathTemplate) {
+    getNixEnvList(appRoot)
       .then(dirs => dirs.find(fileName => fileName === DEFAULT_CONFIG_NAME))
       .then(envFile =>
         envFile
           ? vscode.commands.executeCommand(Command.SELECT_ENV_BY_PATH, envFile)
           : vscode.commands.executeCommand(Command.SELECT_ENV_DIALOG)
       );
-  }
+  } else {
+    if (nixConfigPathTemplate !== NOT_MODIFIED_ENV) {
+      nixConfigPath = nixConfigPathTemplate.replace(
+        "${workspaceRoot}",
+        appRoot
+      );
+      const env = parseEnv(execSync(getEnvShellCmd(nixConfigPath)));
 
-  const nixConfigPath = nixConfigPathTemplate.replace(
-    "${workspaceRoot}",
-    appRoot
-  );
+      applyEnv(env);
 
-  if (nixConfigPathTemplate !== NOT_MODIFIED_ENV) {
-    const env = parseEnv(execSync(getEnvShellCmd(nixConfigPath)));
-
-    applyEnv(env);
-
-    status.text = Label.SELECTED_ENV.replace(
-      ENV_NAME_LABEL_PLACEHOLDER,
-      nixConfigPath.split("/").reverse()[0]
-    );
-    status.command = Command.SELECT_ENV_DIALOG;
-    status.show();
+      status.text = Label.SELECTED_ENV.replace(
+        ENV_NAME_LABEL_PLACEHOLDER,
+        nixConfigPath.split("/").reverse()[0]
+      );
+      status.command = Command.SELECT_ENV_DIALOG;
+      status.show();
+    }
   }
 
   const selectEnvCmd = vscode.commands.registerCommand(
@@ -88,7 +88,7 @@ export function activate(context: vscode.ExtensionContext) {
           );
         })
         .then(envFile => {
-          if (!envFile) {
+          if (!envFile || envFile.id === nixConfigPath) {
             return undefined;
           }
 
@@ -103,20 +103,35 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.commands.registerCommand(
     Command.SELECT_ENV_BY_PATH,
     nixSelectedEnvFilePath => {
-      if (nixSelectedEnvFilePath === nixConfigPath) {
-        return;
-      }
-
       config.update(
         SELECTED_ENV_CONFIG_KEY,
         nixSelectedEnvFilePath.replace(appRoot, "${workspaceRoot}"),
         vscode.ConfigurationTarget.Workspace
       );
 
+      if (nixSelectedEnvFilePath === NOT_MODIFIED_ENV) {
+        status.hide();
+        return vscode.window
+          .showInformationMessage(
+            nixSelectedEnvFilePath === NOT_MODIFIED_ENV
+              ? Notification.ENV_RESTORED
+              : Notification.ENV_APPLIED.replace(
+                  ENV_NAME_LABEL_PLACEHOLDER,
+                  nixSelectedEnvFilePath
+                ),
+            Label.RELOAD
+          )
+          .then(selectedAction => {
+            if (selectedAction === Label.RELOAD) {
+              vscode.commands.executeCommand("workbench.action.reloadWindow");
+            }
+          });
+      }
+
       status.text = Label.LOADING_ENV;
       status.show();
 
-      execCb(getEnvShellCmd(nixSelectedEnvFilePath), (err) => {
+      execCb(getEnvShellCmd(nixSelectedEnvFilePath), err => {
         if (err) {
           return vscode.window.showErrorMessage(err.message);
         }
