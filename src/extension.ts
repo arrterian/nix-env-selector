@@ -29,43 +29,6 @@ export function activate(context: vscode.ExtensionContext) {
     return;
   }
 
-  const status = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Left,
-    100
-  );
-
-  const config = vscode.workspace.getConfiguration();
-  const appRoot = vscode.workspace.rootPath;
-
-  const nixConfigPathTemplate = config.get<string>(SELECTED_ENV_CONFIG_KEY);
-
-  if (!nixConfigPathTemplate) {
-    getNixEnvList(appRoot)
-      .then(dirs => dirs.find(fileName => fileName === DEFAULT_CONFIG_NAME))
-      .then(envFile =>
-        envFile
-          ? vscode.commands.executeCommand(Command.SELECT_ENV_BY_PATH, envFile)
-          : vscode.commands.executeCommand(Command.SELECT_ENV_DIALOG)
-      );
-  } else {
-    if (nixConfigPathTemplate !== NOT_MODIFIED_ENV) {
-      nixConfigPath = nixConfigPathTemplate.replace(
-        "${workspaceRoot}",
-        appRoot
-      );
-      const env = parseEnv(execSync(getEnvShellCmd(nixConfigPath)));
-
-      applyEnv(env);
-
-      status.text = Label.SELECTED_ENV.replace(
-        ENV_NAME_LABEL_PLACEHOLDER,
-        nixConfigPath.split("/").reverse()[0]
-      );
-      status.command = Command.SELECT_ENV_DIALOG;
-      status.show();
-    }
-  }
-
   const selectEnvCmd = vscode.commands.registerCommand(
     Command.SELECT_ENV_DIALOG,
     () => {
@@ -157,6 +120,43 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(selectEnvCmd);
+
+  const status = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Left,
+    100
+  );
+
+  const config = vscode.workspace.getConfiguration();
+  const appRoot = vscode.workspace.rootPath;
+
+  const nixConfigPathTemplate = config.get<string>(SELECTED_ENV_CONFIG_KEY);
+
+  if (!nixConfigPathTemplate) {
+    return getNixEnvList(appRoot)
+      .then(dirs => [dirs.length, dirs.find(fileName => fileName === DEFAULT_CONFIG_NAME)])
+      .then(([totalEnvCount, defaultEnvFile]) =>
+        defaultEnvFile
+          ? vscode.commands.executeCommand(Command.SELECT_ENV_BY_PATH, defaultEnvFile)
+          : !!totalEnvCount && vscode.commands.executeCommand(Command.SELECT_ENV_DIALOG)
+      );
+  } else {
+    if (nixConfigPathTemplate !== NOT_MODIFIED_ENV) {
+      nixConfigPath = nixConfigPathTemplate.replace(
+        "${workspaceRoot}",
+        appRoot
+      );
+      const env = parseEnv(execSync(getEnvShellCmd(nixConfigPath)));
+
+      applyEnv(env);
+
+      status.text = Label.SELECTED_ENV.replace(
+        ENV_NAME_LABEL_PLACEHOLDER,
+        nixConfigPath.split("/").reverse()[0]
+      );
+      status.command = Command.SELECT_ENV_DIALOG;
+      status.show();
+    }
+  }
 }
 
 // this method is called when your extension is deactivated

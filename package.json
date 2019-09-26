@@ -2,7 +2,7 @@
 	"name": "nix-env-selector",
 	"displayName": "Nix Environment Selector",
 	"description": "Allows switch environment for Visual Studio Code and extensions based on Nix config file.",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"keywords": ["nix", "nix-env", "nix-shell", "vscode"],
 	"license": "MIT",
 	"publisher": "arrterian",
