@@ -136,7 +136,7 @@ export function activate(context: vscode.ExtensionContext) {
       .then(dirs => [dirs.length, dirs.find(fileName => fileName === DEFAULT_CONFIG_NAME)])
       .then(([totalEnvCount, defaultEnvFile]) =>
         defaultEnvFile
-          ? vscode.commands.executeCommand(Command.SELECT_ENV_BY_PATH, defaultEnvFile)
+          ? vscode.commands.executeCommand(Command.SELECT_ENV_BY_PATH, `${appRoot}/${DEFAULT_CONFIG_NAME}`)
           : !!totalEnvCount && vscode.commands.executeCommand(Command.SELECT_ENV_DIALOG)
       );
   } else {
