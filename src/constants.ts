@@ -13,7 +13,8 @@ export const Notification = {
     "Environment %ENV_NAME% successfully prepared and will be using after reload."
 };
 
-export const Command = {
-  SELECT_ENV_DIALOG: "extension.selectEnv",
-  SELECT_ENV_BY_PATH: "extension.selectEnvByFile"
-};
+export const enum Command {
+  SELECT_ENV_DIALOG = "extension.selectEnv",
+  SELECT_ENV_BY_PATH = "extension.selectEnvByFile",
+  RELOAD_WINDOW = "workbench.action.reloadWindow",
+}

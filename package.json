@@ -3,7 +3,12 @@
 	"displayName": "Nix Environment Selector",
 	"description": "Allows switch environment for Visual Studio Code and extensions based on Nix config file.",
 	"version": "0.0.5",
-	"keywords": ["nix", "nix-env", "nix-shell", "vscode"],
+	"keywords": [
+		"nix",
+		"nix-env",
+		"nix-shell",
+		"vscode"
+	],
 	"license": "MIT",
 	"publisher": "arrterian",
 	"author": {
@@ -15,8 +20,8 @@
 		"vscode": "^1.38.0"
 	},
 	"repository": {
-		"type" : "git",
-		"url" : "https://github.com/arrterian/nix-env-selector.git"
+		"type": "git",
+		"url": "https://github.com/arrterian/nix-env-selector.git"
 	},
 	"categories": [
 		"Other"
@@ -27,15 +32,15 @@
 	"main": "./out/extension.js",
 	"contributes": {
 		"configuration": {
-      "title": "Nix Environment Selector",
-      "properties": {
-        "nixEnvSelector.nixShellConfig": {
-          "type": "string",
-          "default": null,
-          "description": "Path for nix-shell config"
-        }
-      }
-    },
+			"title": "Nix Environment Selector",
+			"properties": {
+				"nixEnvSelector.nixShellConfig": {
+					"type": "string",
+					"default": null,
+					"description": "Path for nix-shell config"
+				}
+			}
+		},
 		"commands": [
 			{
 				"command": "extension.selectEnv",
@@ -51,11 +56,11 @@
 		"test": "node ./out/test/runTest.js"
 	},
 	"devDependencies": {
+		"@types/dotenv": "^6.1.1",
 		"@types/glob": "^7.1.1",
 		"@types/mocha": "^5.2.6",
 		"@types/node": "^10.12.21",
 		"@types/vscode": "^1.38.0",
-		"@types/dotenv": "^6.1.1",
 		"glob": "^7.1.4",
 		"mocha": "^6.1.4",
 		"tslint": "^5.12.1",
@@ -63,6 +68,8 @@
 		"vscode-test": "^1.2.0"
 	},
 	"dependencies": {
-		"dotenv": "^8.1.0"
+		"dotenv": "^8.1.0",
+		"fluture": "^11.0.3",
+		"fp-ts": "^2.0.5"
 	}
 }

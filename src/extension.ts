@@ -1,162 +1,85 @@
 import * as vscode from "vscode";
-import { readdir } from "fs";
-import { exec as execCb, execSync } from "child_process";
-import { applyEnv, parseEnv } from "./env";
-import { Label, Notification, Command } from "./constants";
+import * as Action from "./actions";
+import { ap } from "fp-ts/lib/Array";
+import { Command } from "./constants";
+import {
+  mapNullable,
+  fromNullable,
+  some,
+  none,
+  getOrElse,
+  Option,
+  fold
+} from "fp-ts/lib/Option";
+import { getShellCmd, toUndefined } from "./helpers";
+import Future, { parallel, FutureInstance } from "fluture";
 
 const SELECTED_ENV_CONFIG_KEY = "nixEnvSelector.nixShellConfig";
-const NOT_MODIFIED_ENV = "NOT_MODIFIED_ENV";
-const ENV_NAME_LABEL_PLACEHOLDER = "%ENV_NAME%";
-const DEFAULT_CONFIG_NAME = "default.nix";
 
-const getEnvShellCmd = (path: string) => `nix-shell ${path} --run env`;
-
-const getNixEnvList = (dirPath: string) =>
-  new Promise<string[]>((resolve, reject) => {
-    readdir(dirPath, (err, dirs) => {
-      if (err) {
-        return reject(err);
-      }
-
-      return resolve(dirs.filter(dirName => /.*\.nix/i.test(dirName)));
-    });
-  });
+const selectEnvCommandHandler = (
+  workspaceRoot: string,
+  config: vscode.WorkspaceConfiguration
+) => () =>
+  Action.getNixConfigList(workspaceRoot)
+    .chain(Action.selectConfigFile(workspaceRoot))
+    .map(mapNullable(({ id }) => ap([id])))
+    .map(
+      mapNullable(apNixConfigPath =>
+        parallel(
+          Infinity,
+          apNixConfigPath([
+            Action.updateEditorConfig(
+              SELECTED_ENV_CONFIG_KEY,
+              config,
+              workspaceRoot
+            ),
+            Action.applyEnvByNixConfPath(getShellCmd("env")),
+            Action.askReload
+          ])
+        ).map(some)
+      )
+    )
+    .chain(
+      getOrElse<FutureInstance<Error, Option<boolean[]>>>(() => Future.of(none))
+    )
+    .fork(
+      err => vscode.window.showErrorMessage(err.message),
+      fold(
+        toUndefined,
+        ([_1, _2, isReloadConfirmed]) =>
+          isReloadConfirmed &&
+          vscode.commands.executeCommand(Command.RELOAD_WINDOW)
+      )
+    );
 
 export function activate(context: vscode.ExtensionContext) {
-  // TODO: make proper subscription event or when restriction
-  let nixConfigPath: string;
-  if (!vscode.workspace.rootPath) {
+  const workspaceRoot = vscode.workspace.rootPath;
+
+  // ignore activation when workspace is not selected
+  if (!workspaceRoot) {
     return;
   }
 
-  const selectEnvCmd = vscode.commands.registerCommand(
-    Command.SELECT_ENV_DIALOG,
-    () => {
-      getNixEnvList(appRoot)
-        .then(dirs => {
-          return vscode.window.showQuickPick(
-            [
-              {
-                id: NOT_MODIFIED_ENV,
-                label: Label.NOT_MODIFIED_ENV
-              },
-              ...dirs.map(fileName => ({
-                id: `${appRoot}/${fileName}`,
-                label: fileName
-              }))
-            ],
-            {
-              placeHolder: Label.SELECT_CONFIG_PLACEHOLDER
-            }
-          );
-        })
-        .then(envFile => {
-          if (!envFile || envFile.id === nixConfigPath) {
-            return undefined;
-          }
-
-          return vscode.commands.executeCommand(
-            Command.SELECT_ENV_BY_PATH,
-            envFile.id
-          );
-        });
-    }
-  );
-
-  vscode.commands.registerCommand(
-    Command.SELECT_ENV_BY_PATH,
-    nixSelectedEnvFilePath => {
-      config.update(
-        SELECTED_ENV_CONFIG_KEY,
-        nixSelectedEnvFilePath.replace(appRoot, "${workspaceRoot}"),
-        vscode.ConfigurationTarget.Workspace
-      );
-
-      if (nixSelectedEnvFilePath === NOT_MODIFIED_ENV) {
-        status.hide();
-        return vscode.window
-          .showInformationMessage(
-            nixSelectedEnvFilePath === NOT_MODIFIED_ENV
-              ? Notification.ENV_RESTORED
-              : Notification.ENV_APPLIED.replace(
-                  ENV_NAME_LABEL_PLACEHOLDER,
-                  nixSelectedEnvFilePath
-                ),
-            Label.RELOAD
-          )
-          .then(selectedAction => {
-            if (selectedAction === Label.RELOAD) {
-              vscode.commands.executeCommand("workbench.action.reloadWindow");
-            }
-          });
-      }
-
-      status.text = Label.LOADING_ENV;
-      status.show();
-
-      execCb(getEnvShellCmd(nixSelectedEnvFilePath), err => {
-        if (err) {
-          return vscode.window.showErrorMessage(err.message);
-        }
-
-        status.text = Label.SELECTED_ENV_NEED_RELOAD;
-        vscode.window
-          .showInformationMessage(
-            nixSelectedEnvFilePath === NOT_MODIFIED_ENV
-              ? Notification.ENV_RESTORED
-              : Notification.ENV_APPLIED.replace(
-                  ENV_NAME_LABEL_PLACEHOLDER,
-                  nixSelectedEnvFilePath
-                ),
-            Label.RELOAD
-          )
-          .then(selectedAction => {
-            if (selectedAction === Label.RELOAD) {
-              vscode.commands.executeCommand("workbench.action.reloadWindow");
-            }
-          });
-      });
-    }
-  );
-
-  context.subscriptions.push(selectEnvCmd);
-
-  const status = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Left,
-    100
-  );
-
   const config = vscode.workspace.getConfiguration();
-  const appRoot = vscode.workspace.rootPath;
+  const maybeNixEnvConfig = fromNullable(
+    config.get<string>(SELECTED_ENV_CONFIG_KEY)
+  );
+  
+  const activateOrShowDialogWithConfig = Action.activateOrShowDialog(
+    workspaceRoot
+  );
 
-  const nixConfigPathTemplate = config.get<string>(SELECTED_ENV_CONFIG_KEY);
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      Command.SELECT_ENV_DIALOG,
+      selectEnvCommandHandler(workspaceRoot, config)
+    )
+  );
 
-  if (!nixConfigPathTemplate) {
-    return getNixEnvList(appRoot)
-      .then(dirs => [dirs.length, dirs.find(fileName => fileName === DEFAULT_CONFIG_NAME)])
-      .then(([totalEnvCount, defaultEnvFile]) =>
-        defaultEnvFile
-          ? vscode.commands.executeCommand(Command.SELECT_ENV_BY_PATH, `${appRoot}/${DEFAULT_CONFIG_NAME}`)
-          : !!totalEnvCount && vscode.commands.executeCommand(Command.SELECT_ENV_DIALOG)
-      );
-  } else {
-    if (nixConfigPathTemplate !== NOT_MODIFIED_ENV) {
-      nixConfigPath = nixConfigPathTemplate.replace(
-        "${workspaceRoot}",
-        appRoot
-      );
-      const env = parseEnv(execSync(getEnvShellCmd(nixConfigPath)));
-
-      applyEnv(env);
-
-      status.text = Label.SELECTED_ENV.replace(
-        ENV_NAME_LABEL_PLACEHOLDER,
-        nixConfigPath.split("/").reverse()[0]
-      );
-      status.command = Command.SELECT_ENV_DIALOG;
-      status.show();
-    }
-  }
+  return activateOrShowDialogWithConfig(maybeNixEnvConfig).fork(
+    err => vscode.window.showErrorMessage(err.message),
+    toUndefined
+  );
 }
 
 // this method is called when your extension is deactivated
