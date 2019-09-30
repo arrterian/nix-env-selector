@@ -25,7 +25,11 @@ const selectEnvCommandHandler = (
 ) => () =>
   Action.getNixConfigList(workspaceRoot)
     .chain(Action.selectConfigFile(workspaceRoot))
-    .map(showStatus(Label.LOADING_ENV, some(Command.SELECT_ENV_DIALOG)))
+    .map(
+      mapNullable(
+        showStatus(Label.LOADING_ENV, some(Command.SELECT_ENV_DIALOG))
+      )
+    )
     .map(mapNullable(({ id }) => ap([id])))
     .map(
       mapNullable(apNixConfigPath =>
