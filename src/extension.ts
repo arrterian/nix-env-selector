@@ -51,8 +51,7 @@ const selectEnvCommandHandler = (
     )
     .fork(
       err => vscode.window.showErrorMessage(err.message),
-      fold(
-        toUndefined,
+      mapNullable(
         ([_1, _2, isReloadConfirmed]) =>
           isReloadConfirmed &&
           vscode.commands.executeCommand(Command.RELOAD_WINDOW)
