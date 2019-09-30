@@ -7,6 +7,8 @@ export const Label = {
   NOT_MODIFIED_ENV: "Original user environment"
 };
 
+export const NOT_MODIFIED_ENV = "NOT_MODIFIED_ENV";
+
 export const Notification = {
   ENV_RESTORED: "Original vscode environment will apply after reload",
   ENV_APPLIED:
@@ -15,6 +17,5 @@ export const Notification = {
 
 export const enum Command {
   SELECT_ENV_DIALOG = "extension.selectEnv",
-  SELECT_ENV_BY_PATH = "extension.selectEnvByFile",
   RELOAD_WINDOW = "workbench.action.reloadWindow",
 }

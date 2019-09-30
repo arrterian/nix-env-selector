@@ -1,18 +1,21 @@
 import * as vscode from "vscode";
 import * as Action from "./actions";
 import { ap } from "fp-ts/lib/Array";
-import { Command } from "./constants";
+import { flow } from "fp-ts/lib/function";
+import { Command, Label } from "./constants";
 import {
-  mapNullable,
+  flatten,
   fromNullable,
   some,
   none,
   getOrElse,
   Option,
-  fold
+  fold,
+  mapNullable
 } from "fp-ts/lib/Option";
 import { getShellCmd, toUndefined } from "./helpers";
-import Future, { parallel, FutureInstance } from "fluture";
+import Future, { FutureInstance, map, parallel } from "fluture";
+import { showStatus, showStatusWithEnv, hideStatus } from "./status-bar";
 
 const SELECTED_ENV_CONFIG_KEY = "nixEnvSelector.nixShellConfig";
 
@@ -22,18 +25,22 @@ const selectEnvCommandHandler = (
 ) => () =>
   Action.getNixConfigList(workspaceRoot)
     .chain(Action.selectConfigFile(workspaceRoot))
+    .map(showStatus(Label.LOADING_ENV, some(Command.SELECT_ENV_DIALOG)))
     .map(mapNullable(({ id }) => ap([id])))
     .map(
       mapNullable(apNixConfigPath =>
         parallel(
-          Infinity,
+          1,
           apNixConfigPath([
             Action.updateEditorConfig(
               SELECTED_ENV_CONFIG_KEY,
               config,
               workspaceRoot
             ),
-            Action.applyEnvByNixConfPath(getShellCmd("env")),
+            flow(
+              Action.applyEnvByNixConfPath(getShellCmd("env")),
+              map(showStatus(Label.SELECTED_ENV_NEED_RELOAD, none))
+            ),
             Action.askReload
           ])
         ).map(some)
@@ -64,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
   const maybeNixEnvConfig = fromNullable(
     config.get<string>(SELECTED_ENV_CONFIG_KEY)
   );
-  
+
   const activateOrShowDialogWithConfig = Action.activateOrShowDialog(
     workspaceRoot
   );
@@ -76,10 +83,19 @@ export function activate(context: vscode.ExtensionContext) {
     )
   );
 
-  return activateOrShowDialogWithConfig(maybeNixEnvConfig).fork(
-    err => vscode.window.showErrorMessage(err.message),
-    toUndefined
-  );
+  return activateOrShowDialogWithConfig(maybeNixEnvConfig)
+    .map(mapNullable(() => maybeNixEnvConfig))
+    .map(flatten)
+    .map(
+      fold(
+        () => hideStatus("unknown"),
+        flow(
+          envConfigPath => envConfigPath.split("/").reverse()[0],
+          showStatusWithEnv(Label.SELECTED_ENV, some(Command.SELECT_ENV_DIALOG))
+        )
+      )
+    )
+    .fork(err => vscode.window.showErrorMessage(err.message), toUndefined);
 }
 
 // this method is called when your extension is deactivated
