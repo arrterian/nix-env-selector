@@ -14,6 +14,7 @@ const setMultiple = (vars: [string, string | undefined][]) => {
 
 export const applyEnv = (envMap: EnvMapT) => {
   setMultiple(Object.entries(envMap));
+  return true;
 };
 
 export { parseEnv };
