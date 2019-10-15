@@ -53,7 +53,8 @@
 		"compile": "tsc -p ./",
 		"watch": "tsc -watch -p ./",
 		"pretest": "yarn run compile",
-		"test": "node ./out/test/runTest.js"
+		"test:integration": "node ./out/test/runTest.js",
+		"test:unit": "echo 'no command specified'"
 	},
 	"devDependencies": {
 		"@types/dotenv": "^6.1.1",
