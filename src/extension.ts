@@ -27,27 +27,26 @@ const selectEnvCommandHandler = (
     .chain(Action.selectConfigFile(workspaceRoot))
     .map(
       mapNullable(
-        showStatus(Label.LOADING_ENV, some(Command.SELECT_ENV_DIALOG))
-      )
-    )
-    .map(mapNullable(({ id }) => ap([id])))
-    .map(
-      mapNullable(apNixConfigPath =>
-        parallel(
-          1,
-          apNixConfigPath([
-            Action.updateEditorConfig(
-              SELECTED_ENV_CONFIG_KEY,
-              config,
-              workspaceRoot
-            ),
-            flow(
-              Action.applyEnvByNixConfPath(getShellCmd("env")),
-              map(showStatus(Label.SELECTED_ENV_NEED_RELOAD, none))
-            ),
-            Action.askReload
-          ])
-        ).map(some)
+        flow(
+          showStatus(Label.LOADING_ENV, some(Command.SELECT_ENV_DIALOG)),
+          ({ id }) => ap([id]),
+          apNixConfigPath =>
+            parallel(
+              1,
+              apNixConfigPath([
+                Action.updateEditorConfig(
+                  SELECTED_ENV_CONFIG_KEY,
+                  config,
+                  workspaceRoot
+                ),
+                flow(
+                  Action.applyEnvByNixConfPath(getShellCmd("env")),
+                  map(showStatus(Label.SELECTED_ENV_NEED_RELOAD, none))
+                ),
+                Action.askReload
+              ])
+            ).map(some)
+        )
       )
     )
     .chain(
@@ -92,13 +91,13 @@ export function activate(context: vscode.ExtensionContext) {
     .map(
       fold(
         () => hideStatus("unknown"),
-        flow(
-          envConfigPath => envConfigPath.split("/").reverse()[0],
-          showStatusWithEnv(Label.SELECTED_ENV, some(Command.SELECT_ENV_DIALOG))
-        )
+        envConfigPath => envConfigPath.split("/").reverse()[0]
       )
     )
-    .fork(err => vscode.window.showErrorMessage(err.message), toUndefined);
+    .fork(
+      err => vscode.window.showErrorMessage(err.message),
+      showStatusWithEnv(Label.SELECTED_ENV, some(Command.SELECT_ENV_DIALOG))
+    );
 }
 
 // this method is called when your extension is deactivated
