@@ -1,10 +1,15 @@
-name: Env Selector CI
+name: 'Release Extension'
 
-on: [push]
+on:
+  push:
+    tags:
+    - '*'
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         node-version: [10.x, 12.x]
@@ -15,10 +20,14 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: install, build, and test
+    - name: Install, Build, and Test
       run: |
         yarn install
         yarn compile
         yarn test:unit
-      env:
-        CI: true
+    - name: Release Extension
+        uses: JCofman/vscodeaction@master
+        env:
+          PUBLISHER_TOKEN: ${{ secrets.VSC_PUBLISH_TOKEN }}
+        with:
+          args: publish -p $PUBLISHER_TOKEN
