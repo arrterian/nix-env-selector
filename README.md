@@ -1,5 +1,7 @@
 # Nix Environment Selector (🧪 *Experimental Release*)
 
+![badge](https://action-badges.now.sh/arrterian/nix-env-selector)
+
 The extension allows you switch environment for Visual Studio Code and extensions based on `.nix` config files.
 
 ## Motivation
