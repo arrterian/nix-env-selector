@@ -95,7 +95,7 @@ export function activate(context: vscode.ExtensionContext) {
       )
     )
     .fork(
-      err => vscode.window.showErrorMessage(err.message),
+      flow(hideStatus, err => vscode.window.showErrorMessage(err.message)),
       showStatusWithEnv(Label.SELECTED_ENV, some(Command.SELECT_ENV_DIALOG))
     );
 }
