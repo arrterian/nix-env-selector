@@ -11,6 +11,7 @@ Nix package manager provides a convenient solution for creating isolated environ
 ## Getting started
 
 * First of all, you should install [Nix package manager](https://nixos.org/nix/).
+* Restart VSCode to be sure path to run `nix-shell` congigured properly
 * [Install the extension](https://marketplace.visualstudio.com/items?itemName=arrterian.nix-env-selector)
 * Create nix env config, like `default.nix` in your project workspace root.
 * Open commands pallet (Cmd + Shift + P) and type `Select environment`
@@ -59,7 +60,7 @@ You can see, IDE can't find a compiler. Let's turn on `shell.nix` env.
 
 Bingo 🎉🎉🎉. Everything is fine now 😈
 
-## Configuration
+## Manual Configuration
 
 All plugin configuration located in `.vscode/settings.json`. You are able to configure for your needs by changing following props in your `settings.json`
 
