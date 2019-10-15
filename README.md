@@ -6,7 +6,7 @@ The extension allows you switch environment for Visual Studio Code and extension
 
 ## Motivation
 
-Nix package manager provides a convenient solution for creating isolated environments with a specific configuration of packages. This way is working as well from the command line, but not prepared for using with IDE. For example, if you have a language server extension that requires a compiler installed inside an isolated environment is no simple way to link 'em with each other. The solution allows you to manage the environment for projects based on Visual Studio Code workspace.
+Nix package manager provides a convenient solution for creating isolated environments with a specific configuration of packages. This way is working from the command line as well, but not prepared for using with IDE. For example, if you have a language server extension requires a compiler installed inside an isolated environment there is no simple way to link 'em with each other. The solution allows you to manage the environment for projects based on Visual Studio Code workspace.
 
 ## Getting started
 
@@ -20,7 +20,9 @@ Nix package manager provides a convenient solution for creating isolated environ
 
 ## Haskell Project running example
 
-We have the following config for our environment (`shell.nix`):
+To run your Haskell application you have to install `GHC compiler`. To avoid global GHC instalation and be able to use different compiler versions in your host let's do this by using `nix` virtual environment
+
+Example of GHC compiler inside the NIX store(`shell.nix`):
 
 ```nix
 { nixpkgs ? import <nixpkgs> {} }:
@@ -49,13 +51,11 @@ pkgs.stdenv.mkDerivation {
 }
 ```
 
-Haskell IDE Engine installed in the user environment and require GHC compiler for work correctly. We want to avoid to install the compiler globally such as different project can require a different version of GHC. We will install the GHC compiler inside the NIX store (described in `shell.nix` above).
-
 Now let's try to open our project in Visual Studio Code.
 
 ![Without Env Demo](resources/without-env-demo.gif)
 
-You can see that IDE can't find a compiler. Let's enable the `shell.nix` env.
+You can see, IDE can't find a compiler. Let's turn on `shell.nix` env.
 
 ![With Env Demo](resources/with-env-demo.gif)
 
@@ -63,7 +63,9 @@ Bingo 🎉🎉🎉. Everything is fine now 😈
 
 ## Supported Platforms
 
-The extension has been tested on macOS. The extension Should work on the Linux platform as well, but not tested yet. Feel free to create an issue if you found a problem.
+* MacOS
+
+The extension Should work on the Linux platform as well, but not tested yet. Feel free to create an issue if you found a problem.
 
 ## License
 
