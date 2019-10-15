@@ -23,43 +23,43 @@ const selectEnvCommandHandler = (
   workspaceRoot: string,
   config: vscode.WorkspaceConfiguration
 ) => () =>
-  Action.getNixConfigList(workspaceRoot)
-    .chain(Action.selectConfigFile(workspaceRoot))
-    .map(
-      mapNullable(
-        flow(
-          showStatus(Label.LOADING_ENV, some(Command.SELECT_ENV_DIALOG)),
-          ({ id }) => ap([id]),
-          apNixConfigPath =>
-            parallel(
-              1,
-              apNixConfigPath([
-                Action.updateEditorConfig(
-                  SELECTED_ENV_CONFIG_KEY,
-                  config,
-                  workspaceRoot
-                ),
-                flow(
-                  Action.applyEnvByNixConfPath(getShellCmd("env")),
-                  map(showStatus(Label.SELECTED_ENV_NEED_RELOAD, none))
-                ),
-                Action.askReload
-              ])
-            ).map(some)
+    Action.getNixConfigList(workspaceRoot)
+      .chain(Action.selectConfigFile(workspaceRoot))
+      .map(
+        mapNullable(
+          flow(
+            showStatus(Label.LOADING_ENV, some(Command.SELECT_ENV_DIALOG)),
+            ({ id }) => ap([id]),
+            apNixConfigPath =>
+              parallel(
+                1,
+                apNixConfigPath([
+                  Action.updateEditorConfig(
+                    SELECTED_ENV_CONFIG_KEY,
+                    config,
+                    workspaceRoot
+                  ),
+                  flow(
+                    Action.applyEnvByNixConfPath(getShellCmd("env")),
+                    map(showStatus(Label.SELECTED_ENV_NEED_RELOAD, none))
+                  ),
+                  Action.askReload
+                ])
+              ).map(some)
+          )
         )
       )
-    )
-    .chain(
-      getOrElse<FutureInstance<Error, Option<boolean[]>>>(() => Future.of(none))
-    )
-    .fork(
-      err => vscode.window.showErrorMessage(err.message),
-      mapNullable(
-        ([_1, _2, isReloadConfirmed]) =>
-          isReloadConfirmed &&
-          vscode.commands.executeCommand(Command.RELOAD_WINDOW)
+      .chain(
+        getOrElse<FutureInstance<Error, Option<boolean[]>>>(() => Future.of(none))
       )
-    );
+      .fork(
+        err => vscode.window.showErrorMessage(err.message),
+        mapNullable(
+          ([_1, _2, isReloadConfirmed]) =>
+            isReloadConfirmed &&
+            vscode.commands.executeCommand(Command.RELOAD_WINDOW)
+        )
+      );
 
 export function activate(context: vscode.ExtensionContext) {
   const workspaceRoot = vscode.workspace.rootPath;
@@ -101,4 +101,4 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }
