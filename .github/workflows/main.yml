@@ -21,6 +21,6 @@ jobs:
       run: |
         yarn install
         yarn compile
-        yarn test
+        yarn test:unit
       env:
         CI: true
