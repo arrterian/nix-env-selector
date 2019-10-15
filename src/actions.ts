@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { node, of, FutureInstance } from "fluture";
+import { node, of, FutureInstance, reject } from "fluture";
 import { readdir } from "fs";
 import { applyEnv, parseEnv } from "./env";
 import { Label, Notification, Command, NOT_MODIFIED_ENV } from "./constants";
@@ -33,9 +33,9 @@ export const askReload = (nixEnvConfig: string) =>
         nixEnvConfig === NOT_MODIFIED_ENV
           ? Notification.ENV_RESTORED
           : Notification.ENV_APPLIED.replace(
-              ENV_NAME_LABEL_PLACEHOLDER,
-              nixEnvConfig
-            ),
+            ENV_NAME_LABEL_PLACEHOLDER,
+            nixEnvConfig
+          ),
         Label.RELOAD
       )
       .then(result => done(null, !!result), err => done(err))
@@ -63,30 +63,30 @@ export const selectConfigFile = (workspaceRoot: string) => (
 export const applyEnvByNixConfPath = (
   makeCmd: (path: string) => Option<string>
 ) => (nixConfigPath: string) =>
-  of<Error, Option<string>>(makeCmd(nixConfigPath))
-    .map(
-      mapNullable(cmd =>
-        node<Error, string>(done => exec(cmd, done))
-          .map(parseEnv)
-          .map(applyEnv)
+    of<Error, Option<string>>(makeCmd(nixConfigPath))
+      .map(
+        mapNullable(cmd =>
+          node<Error, string>(done => exec(cmd, done))
+            .map(parseEnv)
+            .map(applyEnv)
+        )
       )
-    )
-    .chain(fold(() => of(false), id => id));
+      .chain(fold(() => of(false), id => id));
 
 export const updateEditorConfig = (
   configKey: string,
   config: vscode.WorkspaceConfiguration,
   workspaceRoot: string
 ) => (nixConfigPath: string) =>
-  node<Error, boolean>(done =>
-    config
-      .update(
-        configKey,
-        nixConfigPath.replace(workspaceRoot, "${workspaceRoot}"),
-        vscode.ConfigurationTarget.Workspace
-      )
-      .then(_ => done(null, true), err => done(err))
-  );
+    node<Error, boolean>(done =>
+      config
+        .update(
+          configKey,
+          nixConfigPath.replace(workspaceRoot, "${workspaceRoot}"),
+          vscode.ConfigurationTarget.Workspace
+        )
+        .then(_ => done(null, true), err => done(err))
+    );
 
 export const activateOrShowDialog = (workspaceRoot: string) =>
   fold<string, FutureInstance<Error, Option<boolean>>>(
@@ -96,10 +96,10 @@ export const activateOrShowDialog = (workspaceRoot: string) =>
         .chain(totalEnvCount =>
           totalEnvCount > 0
             ? node<Error, boolean>(done =>
-                vscode.commands
-                  .executeCommand(Command.SELECT_ENV_DIALOG)
-                  .then(_ => done(null, true), err => done(err))
-              )
+              vscode.commands
+                .executeCommand(Command.SELECT_ENV_DIALOG)
+                .then(_ => done(null, true), err => done(err))
+            )
               .map(some)
             : of(none)
         );
@@ -114,20 +114,25 @@ export const activateOrShowDialog = (workspaceRoot: string) =>
         workspaceRoot
       );
 
-      return of(
-        pipe(
-          nixConfigPath,
-          getShellCmd("env"),
-          mapNullable(
-            flow(
-              // HACK: sync operation using for block tread and prevent loading other
-              // extension before environment will be applied
-              execSync,
-              parseEnv,
-              applyEnv
-            )
-          ),
-        )
-      );
+      // NOTE: all sync commands could throw exception
+      try {
+        return of(
+          pipe(
+            nixConfigPath,
+            getShellCmd("env"),
+            mapNullable(
+              flow(
+                // HACK: sync operation using for block tread and prevent loading other
+                // extension before environment will be applied
+                execSync,
+                parseEnv,
+                applyEnv
+              )
+            ),
+          )
+        );
+      } catch (err) {
+        return reject(err);
+      }
     }
   );

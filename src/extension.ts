@@ -19,6 +19,13 @@ import { showStatus, showStatusWithEnv, hideStatus } from "./status-bar";
 
 const SELECTED_ENV_CONFIG_KEY = "nixEnvSelector.nixShellConfig";
 
+type ErrorHandler = (err: Error) => any;
+
+const handleError: ErrorHandler = flow(
+  hideStatus,
+  err => vscode.window.showErrorMessage(err.message),
+);
+
 const selectEnvCommandHandler = (
   workspaceRoot: string,
   config: vscode.WorkspaceConfiguration
@@ -53,7 +60,7 @@ const selectEnvCommandHandler = (
         getOrElse<FutureInstance<Error, Option<boolean[]>>>(() => Future.of(none))
       )
       .fork(
-        err => vscode.window.showErrorMessage(err.message),
+        handleError,
         mapNullable(
           ([_1, _2, isReloadConfirmed]) =>
             isReloadConfirmed &&
@@ -95,7 +102,7 @@ export function activate(context: vscode.ExtensionContext) {
       )
     )
     .fork(
-      flow(hideStatus, err => vscode.window.showErrorMessage(err.message)),
+      handleError,
       showStatusWithEnv(Label.SELECTED_ENV, some(Command.SELECT_ENV_DIALOG))
     );
 }
