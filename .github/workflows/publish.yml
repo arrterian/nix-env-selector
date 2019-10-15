@@ -26,8 +26,8 @@ jobs:
         yarn compile
         yarn test:unit
     - name: Release Extension
-        uses: JCofman/vscodeaction@master
-        env:
-          PUBLISHER_TOKEN: ${{ secrets.VSC_PUBLISH_TOKEN }}
-        with:
-          args: publish -p $PUBLISHER_TOKEN
+      uses: JCofman/vscodeaction@master
+      env:
+        PUBLISHER_TOKEN: ${{ secrets.VSC_PUBLISH_TOKEN }}
+      with:
+        args: publish -p $PUBLISHER_TOKEN
