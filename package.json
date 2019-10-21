@@ -53,7 +53,7 @@
 		"compile": "tsc -p ./",
 		"watch": "tsc -watch -p ./",
 		"pretest": "yarn run compile",
-		"test:integration": "node ./out/test/runTest.js",
+		"test:integration": "echo 'Run integration test'",
 		"test:unit": "mocha -r ts-node/register tests/**/*.test.ts"
 	},
 	"devDependencies": {
