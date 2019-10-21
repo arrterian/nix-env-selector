@@ -1,6 +1,6 @@
 import { assert } from "chai";
 
-import { applyEnv } from '../src/env';
+import { applyEnv } from '../env';
 
 describe("env/applyEnv", () => {
   it("should apply environments map into global process var", () => {
