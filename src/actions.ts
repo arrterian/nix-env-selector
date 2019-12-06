@@ -88,7 +88,7 @@ export const updateEditorConfig = (
         .then(_ => done(null, true), err => done(err))
     );
 
-export const activateOrShowDialog = (workspaceRoot: string) =>
+export const activateOrShowDialog = (workspaceRoot: string, nixAttr: Option<string>) =>
   fold<string, FutureInstance<Error, Option<boolean>>>(
     () => {
       return getNixConfigList(workspaceRoot)
@@ -119,7 +119,7 @@ export const activateOrShowDialog = (workspaceRoot: string) =>
         return of(
           pipe(
             nixConfigPath,
-            getShellCmd("env"),
+            getShellCmd("env", nixAttr),
             mapNullable(
               flow(
                 // HACK: sync operation using for block tread and prevent loading other

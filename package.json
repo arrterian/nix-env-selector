@@ -38,6 +38,11 @@
 					"type": "string",
 					"default": null,
 					"description": "Path for nix-shell config"
+				},
+				"nixEnvSelector.nixShellConfigAttr": {
+					"type": "string",
+					"default": null,
+					"description": "Attr for nix-shell config"
 				}
 			}
 		},
