@@ -1,4 +1,4 @@
-import { isSome, none, fromPredicate, mapNullable, getOrElse, Option } from "fp-ts/lib/Option";
+import { fromPredicate, mapNullable, getOrElse, Option } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import { NOT_MODIFIED_ENV } from "./constants";
 

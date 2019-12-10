@@ -2,7 +2,6 @@ import * as vscode from "vscode";
 import * as Action from "./actions";
 import { ap } from "fp-ts/lib/Array";
 import { flow } from "fp-ts/lib/function";
-import { pipe } from "fp-ts/lib/pipeable";
 import { Command, Label, ConfigPath } from "./constants";
 import {
   flatten,
@@ -14,7 +13,7 @@ import {
   fold,
   mapNullable
 } from "fp-ts/lib/Option";
-import { getShellCmd, toUndefined } from "./helpers";
+import { getShellCmd } from "./helpers";
 import Future, { FutureInstance, map, parallel } from "fluture";
 import { showStatus, showStatusWithEnv, hideStatus } from "./status-bar";
 

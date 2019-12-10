@@ -1,6 +1,10 @@
 out
+output
 node_modules
 .vscode-test/
 *.vsix
 secrets
+.psc-ide-port
 yarn-error.log
+.spago
+yarn.lock
