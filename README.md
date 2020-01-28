@@ -68,6 +68,7 @@ All plugin configuration located in `.vscode/settings.json`. You are able to con
 ## Supported Platforms
 
 * MacOS
+* Windows (with Remote-WSL extension)
 
 The extension Should work on the Linux platform as well, but not tested yet. Feel free to create an issue if you found a problem.
 
