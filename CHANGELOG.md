@@ -2,6 +2,10 @@
 
 All notable changes to the extension will be documented in this file.
 
+## [0.1.2]
+
+- Update `mocha` to `7.1.1`
+
 ## [0.1.1]
 
 - The extension tested under Windows platform. (Thank you [Rasmus Eskola](https://github.com/FruitieX))
