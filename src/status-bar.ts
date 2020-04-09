@@ -1,12 +1,13 @@
-import * as vscode from 'vscode';
-import { Command } from './constants';
 import { Option, toUndefined } from "fp-ts/lib/Option";
+import * as vscode from "vscode";
+
+import { Command } from "./constants";
 
 const ENV_NAME_LABEL_PLACEHOLDER = "%ENV_NAME%";
 
 const status = vscode.window.createStatusBarItem(
   vscode.StatusBarAlignment.Left,
-  100
+  100,
 );
 
 export const showStatus = (text: string, maybeCommand: Option<Command>) => <T>(bypass: T) => {

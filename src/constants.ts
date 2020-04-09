@@ -4,7 +4,7 @@ export const Label = {
   SELECTED_ENV_NEED_RELOAD: "$(beaker) Need reload",
   SELECT_CONFIG_PLACEHOLDER: "Select environment config",
   RELOAD: "Reload",
-  NOT_MODIFIED_ENV: "Original user environment"
+  NOT_MODIFIED_ENV: "Original user environment",
 };
 
 export const NOT_MODIFIED_ENV = "NOT_MODIFIED_ENV";
@@ -12,7 +12,7 @@ export const NOT_MODIFIED_ENV = "NOT_MODIFIED_ENV";
 export const Notification = {
   ENV_RESTORED: "Original vscode environment will apply after reload",
   ENV_APPLIED:
-    "Environment %ENV_NAME% successfully prepared and will be using after reload."
+    "Environment %ENV_NAME% successfully prepared and will be using after reload.",
 };
 
 export const enum Command {
