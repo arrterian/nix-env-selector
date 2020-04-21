@@ -4,6 +4,6 @@ out/test/**
 src/**
 .gitignore
 **/tsconfig.json
-**/tslint.json
+**/.eslintrc.json
 **/*.map
 **/*.ts

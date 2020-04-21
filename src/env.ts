@@ -1,4 +1,4 @@
-import { parse as parseEnv } from 'dotenv';
+import { parse as parseEnv } from "dotenv";
 
 type EnvMapT = { [k: string]: string | undefined };
 
@@ -8,7 +8,7 @@ const set = (name: string, value: string | undefined) => {
 
 const setMultiple = (vars: [string, string | undefined][]) => {
   vars
-    .filter(([_, value]) => !!value)
+    .filter(([, value]) => !!value)
     .forEach(([name, value]) => set(name, value));
 };
 

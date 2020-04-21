@@ -1,8 +1,5 @@
-import * as vscode from "vscode";
-import * as Action from "./actions";
+import Future, { FutureInstance, map, parallel } from "fluture";
 import { ap } from "fp-ts/lib/Array";
-import { flow } from "fp-ts/lib/function";
-import { Command, Label, ConfigPath } from "./constants";
 import {
   flatten,
   fromNullable,
@@ -11,13 +8,17 @@ import {
   getOrElse,
   Option,
   fold,
-  mapNullable
+  mapNullable,
 } from "fp-ts/lib/Option";
+import { flow } from "fp-ts/lib/function";
+import * as vscode from "vscode";
+
+import * as Action from "./actions";
+import { Command, Label, ConfigPath } from "./constants";
 import { getShellCmd } from "./helpers";
-import Future, { FutureInstance, map, parallel } from "fluture";
 import { showStatus, showStatusWithEnv, hideStatus } from "./status-bar";
 
-type ErrorHandler = (err: Error) => any;
+type ErrorHandler = (err: Error) => unknown;
 
 const handleError: ErrorHandler = flow(
   hideStatus,
@@ -26,50 +27,50 @@ const handleError: ErrorHandler = flow(
 
 const selectEnvCommandHandler = (
   workspaceRoot: string,
-  config: vscode.WorkspaceConfiguration
+  config: vscode.WorkspaceConfiguration,
 ) => () => {
-    const nixAttr = fromNullable(
-      config.get<string>(ConfigPath.SELECTED_ATTR_CONFIG_KEY)
-    );
+  const nixAttr = fromNullable(
+    config.get<string>(ConfigPath.SELECTED_ATTR_CONFIG_KEY),
+  );
 
-    Action.getNixConfigList(workspaceRoot)
-      .chain(Action.selectConfigFile(workspaceRoot))
-      .map(
-        mapNullable(
-          flow(
-            showStatus(Label.LOADING_ENV, some(Command.SELECT_ENV_DIALOG)),
-            ({ id }) => ap([id]),
-            apNixConfigPath =>
-              parallel(
-                1,
-                apNixConfigPath([
-                  Action.updateEditorConfig(
-                    ConfigPath.SELECTED_ENV_CONFIG_KEY,
-                    config,
-                    workspaceRoot
-                  ),
-                  flow(
-                    Action.applyEnvByNixConfPath(getShellCmd("env", nixAttr)),
-                    map(showStatus(Label.SELECTED_ENV_NEED_RELOAD, none))
-                  ),
-                  Action.askReload
-                ])
-              ).map(some)
-          )
-        )
-      )
-      .chain(
-        getOrElse<FutureInstance<Error, Option<boolean[]>>>(() => Future.of(none))
-      )
-      .fork(
-        handleError,
-        mapNullable(
-          ([_1, _2, isReloadConfirmed]) =>
-            isReloadConfirmed &&
-            vscode.commands.executeCommand(Command.RELOAD_WINDOW)
-        )
-      );
-    };
+  Action.getNixConfigList(workspaceRoot)
+    .chain(Action.selectConfigFile(workspaceRoot))
+    .map(
+      mapNullable(
+        flow(
+          showStatus(Label.LOADING_ENV, some(Command.SELECT_ENV_DIALOG)),
+          ({ id }) => ap([id]),
+          apNixConfigPath =>
+            parallel(
+              1,
+              apNixConfigPath([
+                Action.updateEditorConfig(
+                  ConfigPath.SELECTED_ENV_CONFIG_KEY,
+                  config,
+                  workspaceRoot,
+                ),
+                flow(
+                  Action.applyEnvByNixConfPath(getShellCmd("env", nixAttr)),
+                  map(showStatus(Label.SELECTED_ENV_NEED_RELOAD, none)),
+                ),
+                Action.askReload,
+              ]),
+            ).map(some),
+        ),
+      ),
+    )
+    .chain(
+      getOrElse<FutureInstance<Error, Option<boolean[]>>>(() => Future.of(none)),
+    )
+    .fork(
+      handleError,
+      mapNullable(
+        ([, , isReloadConfirmed]) =>
+          isReloadConfirmed &&
+          vscode.commands.executeCommand(Command.RELOAD_WINDOW),
+      ),
+    );
+};
 
 export function activate(context: vscode.ExtensionContext) {
   const workspaceRoot = vscode.workspace.rootPath;
@@ -81,23 +82,23 @@ export function activate(context: vscode.ExtensionContext) {
 
   const config = vscode.workspace.getConfiguration();
   const maybeNixEnvConfig = fromNullable(
-    config.get<string>(ConfigPath.SELECTED_ENV_CONFIG_KEY)
+    config.get<string>(ConfigPath.SELECTED_ENV_CONFIG_KEY),
   );
 
   const maybeNixAttrConfig = fromNullable(
-    config.get<string>(ConfigPath.SELECTED_ATTR_CONFIG_KEY)
+    config.get<string>(ConfigPath.SELECTED_ATTR_CONFIG_KEY),
   );
 
   const activateOrShowDialogWithConfig = Action.activateOrShowDialog(
     workspaceRoot,
-    maybeNixAttrConfig
+    maybeNixAttrConfig,
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
       Command.SELECT_ENV_DIALOG,
-      selectEnvCommandHandler(workspaceRoot, config)
-    )
+      selectEnvCommandHandler(workspaceRoot, config),
+    ),
   );
 
   return activateOrShowDialogWithConfig(maybeNixEnvConfig)
@@ -106,14 +107,15 @@ export function activate(context: vscode.ExtensionContext) {
     .map(
       fold(
         () => hideStatus("unknown"),
-        envConfigPath => envConfigPath.split("/").reverse()[0]
-      )
+        envConfigPath => envConfigPath.split("/").reverse()[0],
+      ),
     )
     .fork(
       handleError,
-      showStatusWithEnv(Label.SELECTED_ENV, some(Command.SELECT_ENV_DIALOG))
+      showStatusWithEnv(Label.SELECTED_ENV, some(Command.SELECT_ENV_DIALOG)),
     );
 }
 
 // this method is called when your extension is deactivated
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 export function deactivate() { }

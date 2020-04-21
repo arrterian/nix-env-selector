@@ -1,11 +1,11 @@
 import { assert } from "chai";
 
-import { applyEnv } from '../env';
+import { applyEnv } from "../env";
 
 describe("env/applyEnv", () => {
   it("should apply environments map into global process var", () => {
     const result = applyEnv({
-      "test": "123"
+      test: "123",
     });
 
     assert.isTrue(result === true);
@@ -17,7 +17,7 @@ describe("env/applyEnv", () => {
 
   it("shouldn't apply undefined variables into global process var", () => {
     const result = applyEnv({
-      "test": undefined
+      test: undefined,
     });
 
     assert.isTrue(result === true);
