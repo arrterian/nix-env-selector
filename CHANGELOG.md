@@ -2,6 +2,11 @@
 
 All notable changes to the extension will be documented in this file.
 
+## [0.1.3]
+
+- Reword README
+- Fix typos in the descriptions of config settings
+
 ## [0.1.2]
 
 - Update `mocha` to `7.1.1`
