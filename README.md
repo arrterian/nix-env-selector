@@ -1,50 +1,50 @@
 # Nix Environment Selector (🧪 *Experimental Release*)
 
-The extension allows you switch environment for Visual Studio Code and extensions based on `.nix` config files.
+This extension lets you use environments declared in `.nix` files in Visual Studio Code.
 
 ## Motivation
 
-Nix package manager provides a convenient solution for creating isolated environments with a specific configuration of packages. This way is working from the command line as well, but not prepared for using with IDE. For example, if you have a language server extension requires a compiler installed inside an isolated environment there is no simple way to link 'em with each other. The solution allows you to manage the environment for projects based on Visual Studio Code workspace.
+Nix package manager provides a way of creating isolated environments with a specific configuration of packages. These environments are usually activated in the terminal and are not convenient to use within an IDE.
+
+One option is to run `nix-shell` on the command line and then launch `code` within the activated shell. However, this process can quickly become tedious. `Nix Environment Selector` provides an alternative: can automatically apply the environment.
 
 ## Getting started
 
-* First of all, you should install [Nix package manager](https://nixos.org/nix/).
-* Restart VSCode to be sure path to run `nix-shell` configured properly
-* [Install the extension](https://marketplace.visualstudio.com/items?itemName=arrterian.nix-env-selector)
-* Create nix env config, like `default.nix` in your project workspace root.
-* Open commands pallet (Cmd + Shift + P) and type `Select environment`
-* From the list of nix virtual environments choose the one you'd like to apply
+- Install [Nix package manager](https://nixos.org/nix/).
+- Restart VS Code (to make sure that `nix-shell` is in the PATH)
+- [Install the extension](https://marketplace.visualstudio.com/items?itemName=arrterian.nix-env-selector).
+- Create the Nix environment config (like `default.nix` or `shell.nix`) in the root of your project's workspace.
+- Open Command Palette (<kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd>) and run `Nix-Env: Select Environment` command.
+- Choose the Nix environment you'd like to apply.
+- Wait for the environment to build.
+- Restart VS Code to apply the built environment.
 
-## Haskell Project running example
+## Example
 
-To run your Haskell application you have to install `GHC compiler`. To avoid global GHC instalation and be able to use different compiler versions in your host let's do this by using `nix` virtual environment
+### Haskell project
 
-Example of GHC compiler inside the NIX store(`shell.nix`):
+To run a Haskell application you need to have **GHC** (Haskell compiler) installed. With Nix package manager we can create an isolated environment containing only the GHC version and the dependencies that the project needs without polluting the user's environment.
+
+Environment configuration in `shell.nix`:
 
 ```nix
-{ nixpkgs ? import <nixpkgs> {} }:
-let
-  inherit (nixpkgs) pkgs;
-  inherit (pkgs) haskellPackages;
+{ pkgs ? import <nixpkgs> { } }:
+with pkgs;
 
+let
   haskellDeps = ps: with ps; [
     base
     lens
     mtl
     random
   ];
-
-  ghc = pkgs.haskell.packages.ghc864.ghcWithPackages haskellDeps;
-
-  nixPackages = [
-    ghc
-    pkgs.gdb
+  haskellEnv = haskell.packages.ghc865.ghcWithPackages haskellDeps;
+in mkShell {
+  buildInputs = [
+    haskellEnv
     haskellPackages.cabal-install
+    gdb
   ];
-in
-pkgs.stdenv.mkDerivation {
-  name = "snadbox-haskell-workspace";
-  buildInputs = nixPackages;
 }
 ```
 
@@ -52,27 +52,27 @@ Now let's try to open our project in Visual Studio Code.
 
 ![Without Env Demo](resources/without-env-demo.gif)
 
-You can see, IDE can't find a compiler. Let's turn on `shell.nix` env.
+As you can see VS Code can't find the GHC compiler. Let's apply the environment declared in `shell.nix`.
 
 ![With Env Demo](resources/with-env-demo.gif)
 
-Bingo 🎉🎉🎉. Everything is fine now 😈
+Bingo 🎉🎉🎉. Everything is working now 😈
 
-## Manual Configuration
+## Configuration
 
-All plugin configuration located in `.vscode/settings.json`. You are able to configure for your needs by changing following props in your `settings.json`
+You can configure the extension in `.vscode/settings.json` file (located in the root of the workspace). Here are the configuration settings:
 
-`nixEnvSelector.nixShellConfig`: path where your nix config is located. Default: `${workspaceRoot}/default.nix`
-
+| Setting                             | Default                        | Description                     |
+| ----------------------------------- | ------------------------------ | ------------------------------- |
+| `nixEnvSelector.nixShellConfig`     | `${workspaceRoot}/default.nix` | Path of the Nix config file     |
+| `nixEnvSelector.nixShellConfigAttr` | `undefined`                    | Attribute path (`nix-shell -A`) |
 
 ## Supported Platforms
 
-* MacOS
-* Windows (with Remote-WSL extension)
-
-The extension Should work on the Linux platform as well, but not tested yet. Feel free to create an issue if you found a problem.
+- MacOS
+- Linux
+- Windows (with `Remote - WSL` extension)
 
 ## License
 
 [MIT](LICENSE)
-
