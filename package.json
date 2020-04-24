@@ -1,7 +1,7 @@
 {
   "name": "nix-env-selector",
   "displayName": "Nix Environment Selector",
-  "description": "Allows switch environment for Visual Studio Code and extensions based on Nix config file.",
+  "description": "Use custom environments declared in Nix config files.",
   "version": "0.1.2",
   "keywords": [
     "nix",
@@ -37,18 +37,18 @@
         "nixEnvSelector.nixShellConfig": {
           "type": "string",
           "default": null,
-          "description": "Path for nix-shell config"
+          "description": "Path to nix-shell config"
         },
         "nixEnvSelector.nixShellConfigAttr": {
           "type": "string",
           "default": null,
-          "description": "Attr for nix-shell config"
+          "description": "Attribute for nix-shell config. Used in `nix-shell -A`."
         }
       }
     },
     "commands": [{
       "command": "extension.selectEnv",
-      "title": "Nix-Env: Select environment"
+      "title": "Nix-Env: Select Environment"
     }]
   },
   "scripts": {
