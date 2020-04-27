@@ -15,4 +15,4 @@ Please note we have a code of conduct, please follow it in all your interactions
 
 ## Functional programming rather imperative
 
-Please, write your code using functional programming concept rather imperative. We have installed fp-ts in project. Feel free to use any staff from the library.
+Please, write your code using functional programming concept rather than imperative. We have installed fp-ts in project. Feel free to use any stuff from the library.
