@@ -19,6 +19,6 @@ export const getShellCmd = (internalCommand: "env", attr: Option<string>) => (pa
   return pipe(
     path,
     toOption,
-    mapNullable(path => `nix-shell ${attrArg} ${path} --run ${internalCommand}`),
+    mapNullable(path => `nix-shell ${attrArg} \"${path}\" --run ${internalCommand}`),
   );
 };
