@@ -80,7 +80,7 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "npm run compile",
+		"vscode:prepublish": "echo ***DONE***",
 		"compile": "shadow-cljs compile extension",
 		"watch": "shadow-cljs watch extension",
 		"pretest": "npm run compile"
