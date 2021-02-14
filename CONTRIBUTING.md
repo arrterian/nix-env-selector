@@ -12,7 +12,3 @@ Please note we have a code of conduct, please follow it in all your interactions
 3. Increase the version numbers in any examples files and the `packages.json` to the new version that this
    Pull Request would represent. The versioning scheme we use is [SemVer](http://semver.org/).
 4. Your PR will be merged after code owner review.
-
-## Functional programming rather imperative
-
-Please, write your code using functional programming concept rather than imperative. We have installed fp-ts in project. Feel free to use any stuff from the library.

@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [10.x, 12.x]
+        node-version: [12.x]
 
     steps:
     - uses: actions/checkout@v1
@@ -15,10 +15,13 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: install, build, and test
+    - name: Use JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+    - name: install and build
       run: |
-        yarn install
-        yarn compile
-        yarn test:unit
+        npm install
+        npm run compile
       env:
         CI: true

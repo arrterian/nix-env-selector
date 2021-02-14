@@ -11,7 +11,4 @@
         "out": true // set this to false to include "out" folder in search results
     },
     "nixEnvSelector.nixShellConfig": "${workspaceRoot}/default.nix",
-    // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
-    "typescript.tsc.autoDetect": "off",
-    "typescript.tsdk": "node_modules/typescript/lib"
 }

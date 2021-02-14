@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [10.x]
+        node-version: [12.x]
 
     steps:
     - uses: actions/checkout@v1
@@ -20,11 +20,14 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: Install, Build, and Test
+    - name: Use JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+    - name: Install and Build
       run: |
-        yarn install
-        yarn compile
-        yarn test:unit
+        npm install
+        npm run compile
     - name: Release Extension
       uses: JCofman/vscodeaction@master
       env:
