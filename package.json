@@ -29,20 +29,46 @@
 	"activationEvents": [
 		"*"
 	],
-	"main": "./out/extension.js",
+	"main": "./dist/main.js",
 	"contributes": {
 		"configuration": {
 			"title": "Nix Environment Selector",
 			"properties": {
-				"nixEnvSelector.nixShellConfig": {
+				"nixEnvSelector.nixFile": {
 					"type": "string",
 					"default": null,
 					"description": "Path for nix-shell config"
 				},
-				"nixEnvSelector.nixShellConfigAttr": {
+				"nixEnvSelector.suggestion": {
+					"type": "boolean",
+					"default": true,
+					"description": "Shows message with proposal to select env (if available)"
+				},
+				"nixEnvSelector.args": {
 					"type": "string",
 					"default": null,
+					"description": "Additional args for nix-shell (EX: -A some.thing)"
+				},
+				"nixEnvSelector.packages": {
+					"type": "array",
+					"default": [],
 					"description": "Attr for nix-shell config"
+				},
+				"nixEnvSelector.nixShellPath": {
+					"type": "string",
+					"default": null,
+					"deprecationMessage": "Custom path to nix-shell executable",
+					"description": "Path for nix-shell config"
+				},
+				"nixEnvSelector.nixShellConfig": {
+					"type": "string",
+					"deprecationMessage": "[DEPRECATED] Use 'nixFile' instead",
+					"description": "Path for nix-shell config"
+				},
+				"nixEnvSelector.nixShellConfigAttr": {
+					"type": "string",
+					"deprecationMessage": "[DEPRECATED] Use 'args' instead",
+					"description": "Attribute path (nix-shell -A)"
 				}
 			}
 		},
@@ -54,31 +80,22 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "yarn run compile",
-		"compile": "tsc -p ./",
-		"watch": "tsc -watch -p ./",
-		"pretest": "yarn run compile",
+		"vscode:prepublish": "npm run compile",
+		"compile": "shadow-cljs compile extension",
+		"watch": "shadow-cljs watch extension",
+		"pretest": "npm run compile",
 		"test:integration": "echo 'Run integration test'",
 		"test:unit": "mocha -r ts-node/register src/test/**/*.test.ts"
 	},
 	"devDependencies": {
-		"@types/chai": "^4.2.3",
-		"@types/dotenv": "^6.1.1",
-		"@types/glob": "^7.1.1",
-		"@types/mocha": "^5.2.6",
-		"@types/node": "^10.12.21",
 		"@types/vscode": "^1.38.0",
-		"chai": "^4.2.0",
-		"glob": "^7.1.4",
-		"mocha": "^7.1.1",
-		"ts-node": "^8.4.1",
-		"tslint": "^5.12.1",
-		"typescript": "^3.3.1",
+		"browserify": "^17.0.0",
+		"pkg": "^4.4.9",
+		"shadow-cljs": "2.11.18",
 		"vscode-test": "^1.2.0"
 	},
 	"dependencies": {
-		"dotenv": "^8.1.0",
-		"fluture": "^11.0.3",
-		"fp-ts": "^2.0.5"
+		"@vercel/ncc": "^0.27.0",
+		"dotenv": "^8.1.0"
 	}
 }

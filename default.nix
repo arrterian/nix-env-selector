@@ -3,8 +3,8 @@ let
   inherit (nixpkgs) pkgs;
 
   nixPackages = [
-    pkgs.nodejs-10_x
-    pkgs.yarn
+    pkgs.nodejs-14_x
+    pkgs.jdk11
   ];
 in
 pkgs.stdenv.mkDerivation {

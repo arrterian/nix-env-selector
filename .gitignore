@@ -1,10 +1,9 @@
-out
-output
+.calva
+.clj-kondo
+.lsp
+.shadow-cljs
+dist
 node_modules
 .vscode-test/
 *.vsix
 secrets
-.psc-ide-port
-yarn-error.log
-.spago
-yarn.lock
