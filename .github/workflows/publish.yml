@@ -8,23 +8,25 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: nixpkgs/bash
 
     strategy:
       matrix:
-        node-version: [10.x]
+        node-version: [14.x]
 
     steps:
     - uses: actions/checkout@v1
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
       with:
         node-version: ${{ matrix.node-version }}
-    - name: Install, Build, and Test
+    - name: Install and Build
       run: |
-        yarn install
-        yarn compile
-        yarn test:unit
+        npm install
+        npm run compile
     - name: Release Extension
       uses: JCofman/vscodeaction@master
       env:
