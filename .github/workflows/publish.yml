@@ -8,11 +8,11 @@ on:
 jobs:
   build:
 
-    runs-on: nixpkgs/bash
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [14.x]
+        node-version: [12.x]
 
     steps:
     - uses: actions/checkout@v1

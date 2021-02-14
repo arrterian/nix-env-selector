@@ -3,7 +3,7 @@ let
   inherit (nixpkgs) pkgs;
 
   nixPackages = [
-    pkgs.nodejs-14_x
+    pkgs.nodejs-12_x
     pkgs.jdk11
   ];
 in

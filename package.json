@@ -83,19 +83,12 @@
 		"vscode:prepublish": "npm run compile",
 		"compile": "shadow-cljs compile extension",
 		"watch": "shadow-cljs watch extension",
-		"pretest": "npm run compile",
-		"test:integration": "echo 'Run integration test'",
-		"test:unit": "mocha -r ts-node/register src/test/**/*.test.ts"
+		"pretest": "npm run compile"
 	},
 	"devDependencies": {
 		"@types/vscode": "^1.38.0",
-		"browserify": "^17.0.0",
-		"pkg": "^4.4.9",
 		"shadow-cljs": "2.11.18",
 		"vscode-test": "^1.2.0"
 	},
-	"dependencies": {
-		"@vercel/ncc": "^0.27.0",
-		"dotenv": "^8.1.0"
-	}
+	"dependencies": {}
 }
