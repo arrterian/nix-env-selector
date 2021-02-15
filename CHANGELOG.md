@@ -2,7 +2,6 @@
 
 All notable changes to the extension will be documented in this file.
 
-<<<<<<< HEAD
 ## [1.0.0]
 
 - Rewrite codebase with ClojureScript from scratch
@@ -18,12 +17,11 @@ All notable changes to the extension will be documented in this file.
 - Add ability to pass the custom path to `nix-shell` utility through config's `nixShellConfig` parameter [[ISSUE-38](https://github.com/arrterian/nix-env-selector/issues/38)]
 
 - Fix bug with misbehaving when spaces were presented in nix-config path [[ISSUE-41](https://github.com/arrterian/nix-env-selector/issues/41)]
-=======
+
 ## [0.1.3]
 
 - Reword README
 - Fix typos in the descriptions of config settings
->>>>>>> 62fc2e367229c74541f71bbaf40db770e9c20824
 
 ## [0.1.2]
 
