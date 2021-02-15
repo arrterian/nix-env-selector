@@ -21,12 +21,12 @@
 
 (defn config-set! [config target key value]
   (let [update-result (d/deferred)
-        target (cond
-                 (= target :global) 1
-                 (= target :workspace) 2
-                 (= target :workspace-folder) 3
-                 :else (throw (js/Error "Wrong target for updating config.")))
-        path (keyword-to-path key)]
+        target        (cond
+                        (= target :global) 1
+                        (= target :workspace) 2
+                        (= target :workspace-folder) 3
+                        :else (throw (js/Error "Wrong target for updating config.")))
+        path          (keyword-to-path key)]
     (-> (.update config path value target)
         (.then #(d/success! update-result %1))
         (.catch #(d/error! update-result %1)))

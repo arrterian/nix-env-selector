@@ -10,4 +10,4 @@
                     (clj->js' handler)))
 (defn execute [cmd-id]
   (.executeCommand commands
-                    (keyword-to-path cmd-id)))
+                   (keyword-to-path cmd-id)))

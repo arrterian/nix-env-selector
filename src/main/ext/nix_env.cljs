@@ -54,5 +54,5 @@
 
 (defn set-current-env [env-vars]
   (mapv (fn [[name value]]
-         (aset js/process.env name value))
-       env-vars))
+          (aset js/process.env name value))
+        env-vars))

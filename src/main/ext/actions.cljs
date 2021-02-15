@@ -25,10 +25,10 @@
 
 
 (defn show-propose-env-dialog []
-  (let [select-label (-> l/lang :label :select-env)
+  (let [select-label  (-> l/lang :label :select-env)
         dismiss-label (-> l/lang :label :dismiss)
-        dialog (w/show-notification (-> l/lang :notification :env-available)
-                                    [select-label dismiss-label])]
+        dialog        (w/show-notification (-> l/lang :notification :env-available)
+                                           [select-label dismiss-label])]
     (d/chain dialog
              #((cond
                  (= select-label %1) (cmd/execute :extension/select-env)
@@ -39,10 +39,10 @@
 
 
 (defn show-reload-dialog []
-  (let [reload-label (-> l/lang :label :reload)
+  (let [reload-label   (-> l/lang :label :reload)
         reload-message (-> l/lang :notification :env-applied)
-        dialog (w/show-notification reload-message
-                                    [reload-label])]
+        dialog         (w/show-notification reload-message
+                                            [reload-label])]
     (d/chain dialog
              #(when (= reload-label %1)
                 (cmd/execute :workbench/action.reload-window)))))
@@ -51,9 +51,10 @@
   (fn []
     (d/chain (get-nix-files workspace-root)
              #(w/show-quick-pick {:place-holder (-> l/lang :label :select-config-placeholder)}
-                                 (into [{:id "disable" :label (-> l/lang :label :disabled-nix)}]
+                                 (into [{:id    "disable"
+                                         :label (-> l/lang :label :disabled-nix)}]
                                        (map (fn [file-name]
-                                              {:id file-name
+                                              {:id    file-name
                                                :label file-name}) %1)))
              (fn [nix-file-name]
                (cond
@@ -77,7 +78,7 @@
                (when nix-path
                  (status-bar/show {:text (-> l/lang :label :env-loading)}
                                   status)
-                 (env/get-nix-env-async {:nix-config nix-path
+                 (env/get-nix-env-async {:nix-config     nix-path
                                          :nix-shell-path (workspace/config-get config :nix-env-selector/nix-shell-path)})))
              (fn [env-vars]
                (when env-vars
@@ -85,6 +86,6 @@
                  :ok))
              (fn [result]
                (when result
-                 (status-bar/show {:text (-> l/lang :label :env-need-reload)
+                 (status-bar/show {:text    (-> l/lang :label :env-need-reload)
                                    :command :extension/select-env} status)
                  (show-reload-dialog))))))
