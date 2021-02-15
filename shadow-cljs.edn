@@ -8,4 +8,9 @@
           {:target :node-library
            :output-to "dist/main.js"
            :exports {:activate main/activate
-                     :deactivate main/deactivate}}}}
+                     :deactivate main/deactivate}
+           :release {:compiler-options {:optimizations :simple}}
+           :js-options
+           {:js-provider :shadow
+            :keep-native-requires true
+            :keep-as-require #{"vscode"}}}}}

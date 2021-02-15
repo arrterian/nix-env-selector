@@ -4,5 +4,9 @@
 shadow-cljs.edn
 default.nix
 src/**
-**/*.map
-**/*.ts
+.calva/**
+.clj-kondo/**
+.github/**
+.lsp/**
+node_modules/**
+.shadow-cljs/**
