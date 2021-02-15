@@ -10,5 +10,6 @@
     "search.exclude": {
         "out": true // set this to false to include "out" folder in search results
     },
-    "nixEnvSelector.nixShellConfig": "${workspaceRoot}/default.nix",
+    "nixEnvSelector.suggestion": false,
+    "nixEnvSelector.nixFile": "${workspaceRoot}/default.nix",
 }

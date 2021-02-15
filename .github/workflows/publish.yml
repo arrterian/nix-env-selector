@@ -28,9 +28,12 @@ jobs:
       run: |
         npm install
         npm run compile
-    - name: Release Extension
-      uses: JCofman/vscodeaction@master
-      env:
-        PUBLISHER_TOKEN: ${{ secrets.VSC_PUBLISH_TOKEN }}
+    - name: Publish to Open VSX Registry
+      uses: HaaLeo/publish-vscode-extension@v0
       with:
-        args: publish -p $PUBLISHER_TOKEN
+        pat: ${{ secrets.OPEN_VSC_PUBLISH_TOKEN }}
+    - name: Publish to Visual Studio Marketplace
+      uses: HaaLeo/publish-vscode-extension@v0
+      with:
+        pat: ${{ secrets.VSC_PUBLISH_TOKEN }}
+        registryUrl: https://marketplace.visualstudio.com
