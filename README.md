@@ -64,15 +64,10 @@ You can configure the extension in `.vscode/settings.json` file (located in the 
 
 | Setting                             | Default                        | Description                     |
 | ----------------------------------- | ------------------------------ | ------------------------------- |
-<<<<<<< HEAD
 | `nixEnvSelector.nixFile`            | null                           | Path to the Nix config file     |
 | `nixEnvSelector.packages`           | []                             | List packages using as `-p` nix-shell args |
 | `nixEnvSelector.args`               | null                           | Custom args string for nix-shell. EX: `-A <something> --pure` |
 | `nixEnvSelector.nixShellPath`       | null                           | Custom path for nix-shell executable |
-=======
-| `nixEnvSelector.nixShellConfig`     | `${workspaceRoot}/default.nix` | Path of the Nix config file     |
-| `nixEnvSelector.nixShellConfigAttr` | `undefined`                    | Attribute path (`nix-shell -A`) |
->>>>>>> 62fc2e367229c74541f71bbaf40db770e9c20824
 
 ## Supported Platforms
 
