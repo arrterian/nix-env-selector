@@ -3,7 +3,7 @@
                 "src/main"
                 "src/test"]
  :dependencies [[camel-snake-kebab "0.4.2"]
-                [manifold-cljs "0.1.7-1"]]
+                [funcool/promesa "6.0.0"]]
  :builds {:extension
           {:target :node-library
            :output-to "dist/main.js"

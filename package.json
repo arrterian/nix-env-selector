@@ -2,7 +2,7 @@
 	"name": "nix-env-selector",
 	"displayName": "Nix Environment Selector",
 	"description": "Allows switch environment for Visual Studio Code and extensions based on Nix config file.",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"keywords": [
 		"nix",
 		"nix-env",
@@ -74,8 +74,12 @@
 		},
 		"commands": [
 			{
-				"command": "extension.selectEnv",
+				"command": "nixEnvSelector.selectEnv",
 				"title": "Nix-Env: Select environment"
+			},
+			{
+				"command": "nixEnvSelector.hitEnv",
+				"title": "Nix-Env: Hit environment"
 			}
 		]
 	},

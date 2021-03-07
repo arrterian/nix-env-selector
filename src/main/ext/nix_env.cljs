@@ -1,7 +1,7 @@
 (ns ext.nix-env
   (:require ["child_process" :refer [exec execSync]]
             [clojure.string :as s]
-            [manifold-cljs.deferred :as d]))
+            [promesa.core :as p]))
 
 (defn ^:private list-to-args [pref-arg list]
   (s/join " " (map #(str pref-arg " " %1) list)))
@@ -44,13 +44,13 @@
       (parse-exported-vars)))
 
 (defn get-nix-env-async [options]
-  (let [env-result (d/deferred)]
+  (let [env-result (p/deferred)]
     (exec (get-shell-env-cmd options)
           (fn [err result]
             (if (nil? err)
-              (d/success! env-result result)
-              (d/error! env-result err))))
-    (d/chain env-result parse-exported-vars)))
+              (p/resolve! env-result result)
+              (p/reject! env-result err))))
+    (p/chain env-result parse-exported-vars)))
 
 (defn set-current-env [env-vars]
   (mapv (fn [[name value]]
