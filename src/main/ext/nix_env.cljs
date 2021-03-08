@@ -50,7 +50,7 @@
             (if (nil? err)
               (p/resolve! env-result result)
               (p/reject! env-result err))))
-    (p/chain env-result parse-exported-vars)))
+    (p/map parse-exported-vars env-result)))
 
 (defn set-current-env [env-vars]
   (mapv (fn [[name value]]
