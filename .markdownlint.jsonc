@@ -1,0 +1,19 @@
+{
+	"MD033": {
+		"allowed_elements": ["p", "img", "kbd"]
+	},
+  "MD013": {
+    "line_length": 100,
+    "tables": false
+  },
+  "MD030": {
+    // Spaces for single-line unordered list items
+    "ul_single": 3,
+    // Spaces for single-line ordered list items
+    "ol_single": 3,
+    // Spaces for multi-line unordered list items
+    "ul_multi": 3,
+    // Spaces for multi-line ordered list items
+    "ol_multi": 3
+  }
+}
