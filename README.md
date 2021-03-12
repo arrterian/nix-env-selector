@@ -4,7 +4,7 @@
   <img
     width="200"
     height="200"
-    src="resources/icon.png"
+    src="https://raw.githubusercontent.com/arrterian/nix-env-selector/master/resources/icon.png"
     alt="nix-env-selector-logo"/>
 </p>
 
@@ -102,7 +102,7 @@ file (located in the root of the workspace). Here are the configuration settings
 
 If you like the extension and want to support author, click the button bellow.
 
-[![Donate](resources/donate-wfp.svg)](https://secure.wayforpay.com/button/b2fdead505bff)
+[![Donate](https://raw.githubusercontent.com/arrterian/nix-env-selector/master/resources/donate-wfp.svg)](https://secure.wayforpay.com/button/b2fdead505bff)
 
 ## License
 
