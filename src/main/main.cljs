@@ -2,7 +2,7 @@
   (:require [config :refer [config update-config!]]
             [promesa.core :as p]
             [vscode.status-bar :as status]
-            [vscode.context :refer [subsciribe]]
+            [vscode.context :refer [subsciribe global-state]]
             [vscode.command :as cmd]
             [ext.actions :as act]
             [ext.nix-env :as env]
@@ -13,7 +13,7 @@
   (update-config!)
   (let [status-bar     (status/create :left 100)]
     (if (or (not-empty (:nix-file @config)) (not-empty (:nix-packages @config)))
-      (do
+      (try
         (-> (env/get-nix-env-sync {:nix-config     (:nix-file @config)
                                    :packages       (:nix-packages @config)
                                    :args           (:nix-args @config)
@@ -21,7 +21,11 @@
             (env/set-current-env))
         (->> status-bar
              (status/show {:text    (render-env-status lang (:nix-file @config))
-                           :command :nix-env-selector/select-env})))
+                           :command :nix-env-selector/select-env}))
+        (act/show-donate-message (global-state ctx))
+
+        (catch :default e
+          (js/console.error "Applying environment error" e)))
 
       ;; show notification that nix config available
       ;; if workspace contains .nix file(s)
