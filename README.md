@@ -102,7 +102,15 @@ file (located in the root of the workspace). Here are the configuration settings
 
 If you like the extension and want to support author, click the button bellow.
 
-[![Donate](https://raw.githubusercontent.com/arrterian/nix-env-selector/master/resources/donate-wfp.svg)](https://secure.wayforpay.com/button/b2fdead505bff)
+<a
+  href="https://secure.wayforpay.com/button/b2fdead505bff"
+  alt="donate">
+  <img
+      width="170"
+      height="35"
+      src="https://raw.githubusercontent.com/arrterian/nix-env-selector/master/resources/donate-wfp.png"
+      alt="donate"/>
+</a>
 
 ## License
 
