@@ -1,5 +1,6 @@
 (ns ext.nix-env
   (:require ["child_process" :refer [exec execSync]]
+            ["path" :refer [dirname]]
             [clojure.string :as s]
             [promesa.core :as p]))
 
@@ -39,13 +40,14 @@
 
 (defn get-nix-env-sync [options]
   (-> (get-shell-env-cmd options)
-      (execSync)
+      (execSync (clj->js {:cwd (dirname (:nix-config options))}))
       (.toString)
       (parse-exported-vars)))
 
 (defn get-nix-env-async [options]
   (let [env-result (p/deferred)]
     (exec (get-shell-env-cmd options)
+          (clj->js {:cwd (dirname (:nix-config options))})
           (fn [err result]
             (if (nil? err)
               (p/resolve! env-result result)
