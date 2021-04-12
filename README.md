@@ -103,7 +103,7 @@ file (located in the root of the workspace). Here are the configuration settings
 If you like the extension and want to support author, click the button bellow.
 
 <a
-  href="https://secure.wayforpay.com/button/b2fdead505bff"
+  href="https://secure.wayforpay.com/payment/selector"
   alt="donate">
   <img
       width="170"
