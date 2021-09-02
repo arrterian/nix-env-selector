@@ -8,7 +8,7 @@
 
 (defn update-config! []
   (let [workspace-root (first (workspace/get-folders))]
-    (reset! config {:workspace-root (first (workspace/get-folders))
+    (reset! config {:workspace-root workspace-root
                     :nix-file       (-> (workspace/config-get vscode-config :nix-env-selector/nix-file)
                                         (#(when %1 (render-workspace %1 workspace-root))))
                     :suggest-nix?   (workspace/config-get vscode-config :nix-env-selector/suggestion)
