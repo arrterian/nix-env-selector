@@ -2,7 +2,8 @@
   (:require ["child_process" :refer [exec execSync]]
             ["path" :refer [dirname]]
             [clojure.string :as s]
-            [promesa.core :as p]))
+            [promesa.core :as p]
+            [vscode.window :as w]))
 
 (defn ^:private list-to-args [pref-arg list]
   (s/join " " (map #(str pref-arg " " %1) list)))
@@ -38,20 +39,24 @@
                             (catch js/Error _ nil))]))))
        (filter not-empty)))
 
-(defn get-nix-env-sync [options]
-  (-> (get-shell-env-cmd options)
-      (execSync (clj->js {:cwd (dirname (:nix-config options))}))
-      (.toString)
-      (parse-exported-vars)))
+(defn get-nix-env-sync [options log-channel]
+  (let [cmd (get-shell-env-cmd options)]
+    (w/write-log log-channel (str "Running command synchronously: " cmd))
+    (-> (execSync (clj->js cmd {:cwd (dirname (:nix-config options))}))
+        (.toString)
+        (parse-exported-vars))))
 
-(defn get-nix-env-async [options]
-  (let [env-result (p/deferred)]
-    (exec (get-shell-env-cmd options)
-          (clj->js {:cwd (dirname (:nix-config options))})
-          (fn [err result]
+(defn get-nix-env-async [options log-channel]
+  (let [env-result (p/deferred)
+        cmd (get-shell-env-cmd options)]
+    (w/write-log log-channel (str "Running command asynchronously: " cmd))
+    (exec (clj->js cmd {:cwd (dirname (:nix-config options))})
+          (fn [err result stderr]
             (if (nil? err)
               (p/resolve! env-result result)
-              (p/reject! env-result err))))
+              (
+                (w/write-log log-channel (str "Error applying environment: " stderr))
+                (p/reject! env-result err)))))
     (p/map parse-exported-vars env-result)))
 
 (defn set-current-env [env-vars]
