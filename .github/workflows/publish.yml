@@ -29,10 +29,12 @@ jobs:
         npm install
         npm run compile
     - name: Publish to Open VSX Registry
+      continue-on-error: true
       uses: HaaLeo/publish-vscode-extension@v0
       with:
         pat: ${{ secrets.OPEN_VSC_PUBLISH_TOKEN }}
     - name: Publish to Visual Studio Marketplace
+      continue-on-error: true
       uses: HaaLeo/publish-vscode-extension@v0
       with:
         pat: ${{ secrets.VSC_PUBLISH_TOKEN }}
