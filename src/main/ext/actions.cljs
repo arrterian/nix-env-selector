@@ -39,7 +39,7 @@
                                                               false))))))
 
 (defn show-donate-message [state]
-  (let [show-message-info-path (str :nix-env-selector/select-env)
+  (let [show-message-info-path (str :nix-env-selector/donation)
         show-message?          (.get state show-message-info-path true)
         support-label          (-> l/lang :label :support)
         dismiss-label          (-> l/lang :label :dismiss)
