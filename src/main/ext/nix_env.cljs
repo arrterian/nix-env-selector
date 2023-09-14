@@ -54,7 +54,7 @@
           (fn [err result stderr]
             (if (nil? err)
               (p/resolve! env-result result)
-              (
+              (do
                 (w/write-log log-channel (str "Error applying environment: " stderr))
                 (p/reject! env-result err)))))
     (p/map parse-exported-vars env-result)))
