@@ -69,6 +69,7 @@
     (status-bar/show {:text (-> l/lang :label :env-loading)}
                      status)
     (->> (env/get-nix-env-async {:nix-config     nix-path
+                                 :args           (:nix-args @config)
                                  :nix-shell-path (:nix-shell-path @config)}
                                 log-channel)
          (p/map (fn [env-vars]
