@@ -27,7 +27,8 @@
 		"Other"
 	],
 	"activationEvents": [
-		"*"
+		"*",
+		"onLanguage"
 	],
 	"main": "./dist/main.js",
 	"contributes": {
