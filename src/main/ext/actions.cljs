@@ -25,14 +25,14 @@
                           (not))) %1)
            files-res)))
 
-(defn show-propose-env-dialog []
+(defn show-propose-env-dialog [log-channel]
   (let [select-label  (-> l/lang :label :select-env)
         dismiss-label (-> l/lang :label :dismiss)
         dialog        (w/show-notification (-> l/lang :notification :env-available)
                                            [select-label dismiss-label])]
     (p/mapcat dialog
               #((cond
-                  (= select-label %1) (cmd/execute :nix-env-selector/select-env)
+                  (= select-label %1) (cmd/execute :nix-env-selector/select-env log-channel)
                   (= dismiss-label %1) (workspace/config-set! vscode-config
                                                               :workspace
                                                               :nix-env-selector/suggestion
@@ -54,21 +54,24 @@
                   (= answer support-label)
                    (open-external-url constants/donate-url)))))))
 
-(defn show-reload-dialog []
+(defn show-reload-dialog [log-channel]
   (let [reload-label   (-> l/lang :label :reload)
         reload-message (-> l/lang :notification :env-applied)
         dialog         (w/show-notification reload-message
                                             [reload-label])]
     (p/chain dialog
              #(when (= reload-label %1)
-                (cmd/execute :workbench/action.reload-window)))))
+                (cmd/execute :workbench/action.reload-window log-channel)))))
 
-(defn load-env-by-path [nix-path status]
+(defn load-env-by-path [nix-path status log-channel]
   (when nix-path
+    (w/write-log log-channel (str "Loading env in path: " nix-path))
     (status-bar/show {:text (-> l/lang :label :env-loading)}
                      status)
     (->> (env/get-nix-env-async {:nix-config     nix-path
-                                 :nix-shell-path (:nix-shell-path @config)})
+                                 :args           (:nix-args @config)
+                                 :nix-shell-path (:nix-shell-path @config)}
+                                log-channel)
          (p/map (fn [env-vars]
                   (when env-vars
                     (env/set-current-env env-vars)
@@ -79,12 +82,14 @@
                                       :command :nix-env-selector/select-env} status))))
          (p/mapcat show-reload-dialog))))
 
-(defn hit-nix-environment [status]
+(defn hit-nix-environment [status log-channel]
+  (w/write-log log-channel "Running action: Hit environment")
   (fn []
     (-> (:nix-file @config)
-        (load-env-by-path status))))
+        (load-env-by-path status log-channel))))
 
-(defn select-nix-environment [status]
+(defn select-nix-environment [status log-channel]
+  (w/write-log log-channel "Running action: Select environment")
   (fn []
     (->> (get-nix-files (:workspace-root @config))
          (p/mapcat #(w/show-quick-pick {:place-holder (-> l/lang :label :select-config-placeholder)}
@@ -97,6 +102,7 @@
                   (cond
                     (= "disable" (:id nix-file-name))
                     (do
+                      (w/write-log log-channel "Selected to disable Nix environment")
                       (status-bar/hide status)
                       (workspace/config-set! vscode-config
                                              :workspace
@@ -109,10 +115,11 @@
 
                     (not-empty nix-file-name)
                     (let [nix-file (str (:workspace-root @config) "/" (:id nix-file-name))]
+                      (w/write-log log-channel (str "Selected Nix file: " nix-file))
                       (workspace/config-set! vscode-config
                                              :workspace
                                              :nix-env-selector/nix-file
                                              (unrender-workspace nix-file (:workspace-root @config)))
                       nix-file))))
-         (p/mapcat #(load-env-by-path %1 status))
+         (p/mapcat #(load-env-by-path %1 status log-channel))
          (p/error #(js/console.error %)))))

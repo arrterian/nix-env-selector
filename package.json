@@ -58,8 +58,7 @@
 				"nixEnvSelector.nixShellPath": {
 					"type": "string",
 					"default": null,
-					"deprecationMessage": "Custom path to nix-shell executable",
-					"description": "Path for nix-shell config"
+					"description": "Custom path to nix-shell executable"
 				},
 				"nixEnvSelector.nixShellConfig": {
 					"type": "string",

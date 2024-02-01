@@ -13,7 +13,9 @@
                                         (#(when %1 (render-workspace %1 workspace-root))))
                     :suggest-nix?   (workspace/config-get vscode-config :nix-env-selector/suggestion)
                     :nix-packages   (workspace/config-get vscode-config :nix-env-selector/packages)
-                    :nix-args       (workspace/config-get vscode-config :nix-env-selector/args)
-                    :nix-shell-path (workspace/config-get vscode-config :nix-env-selector/nix-shell-path)})))
+                    :nix-args       (-> (workspace/config-get vscode-config :nix-env-selector/args)
+                                        (#(when %1 (render-workspace %1 workspace-root))))
+                    :nix-shell-path (-> (workspace/config-get vscode-config :nix-env-selector/nix-shell-path)
+                                        (#(when %1 (render-workspace %1 workspace-root))))})))
 
 (workspace/on-config-change update-config!)
