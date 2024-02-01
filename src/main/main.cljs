@@ -28,8 +28,6 @@
           (->> status-bar
               (status/show {:text    (render-env-status lang (:nix-file @config))
                             :command :nix-env-selector/select-env}))
-          (act/show-donate-message (global-state ctx))
-
           (catch :default e
             (w/write-log log-channel (str "Error applying environment: " e))))
 
