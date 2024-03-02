@@ -1,17 +1,29 @@
 { nixpkgs ? import <nixpkgs> {} }:
 let
-  inherit (nixpkgs) pkgs;
+  inherit (nixpkgs) lib pkgs stdenv;
 
   nixPackages = [
-    pkgs.nodejs-12_x
+    pkgs.nodejs
     pkgs.jdk11
-  ];
+    pkgs.vsce
+  ] ++ lib.optional stdenv.isDarwin pkgs.darwin.apple_sdk.frameworks.Security;
+  packageJson = (lib.importJSON ./package.json);
 in
-pkgs.stdenv.mkDerivation {
-  name = "vscode-env-selector";
+pkgs.stdenv.mkDerivation rec {
+  pname = packageJson.name;
+  version = packageJson.version;
+
+  src = ./.;
+
   buildInputs = nixPackages;
-  postInstall =
-    ''
-      yarn install
-    '';
+  buildPhase = ''
+    npm install
+    npm run compile
+    echo y | vsce package
+  '';
+
+  installPhase = ''
+    mkdir -p $out/bin
+    cp ${pname}-${version}.vsix $out/bin
+  '';
 }
