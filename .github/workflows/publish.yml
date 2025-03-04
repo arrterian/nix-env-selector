@@ -23,7 +23,7 @@ jobs:
     - name: Use JDK
       uses: actions/setup-java@v1
       with:
-        java-version: 1.8
+        java-version: 17
     - name: Install and Build
       run: |
         npm install
