@@ -2,7 +2,7 @@
 	"name": "nix-env-selector",
 	"displayName": "Nix Environment Selector",
 	"description": "Allows switch environment for Visual Studio Code and extensions based on Nix config file.",
-	"version": "1.0.11",
+	"version": "1.0.12",
 	"keywords": [
 		"nix",
 		"nix-env",
@@ -17,7 +17,7 @@
 	},
 	"icon": "resources/icon.png",
 	"engines": {
-		"vscode": "^1.38.0"
+		"vscode": "^1.97.0"
 	},
 	"repository": {
 		"type": "git",
@@ -30,7 +30,7 @@
 		"*",
 		"onLanguage"
 	],
-	"main": "./dist/main.js",
+	"main": "./dist/index.js",
 	"contributes": {
 		"configuration": {
 			"title": "Nix Environment Selector",
@@ -85,15 +85,14 @@
 	},
 	"scripts": {
 		"vscode:prepublish": "echo ***DONE***",
-		"compile": "shadow-cljs release extension",
+    "bundle": "esbuild --bundle dist/main.js --outfile=dist/index.js --external:vscode --platform=node --format=cjs --loader:.svg=file && rm dist/main.js",
+		"compile": "shadow-cljs release extension && npm run bundle",
 		"watch": "shadow-cljs watch extension"
 	},
 	"devDependencies": {
-		"@types/vscode": "^1.38.0",
-		"shadow-cljs": "2.11.18",
-		"vscode-test": "^1.2.0",
-		"webpack": "^5.21.2",
-		"webpack-cli": "^4.5.0"
-	},
-	"dependencies": {}
+		"@types/vscode": "^1.97.0",
+		"@vscode/test-electron": "^2.4.1",
+		"esbuild": "^0.25.0",
+		"shadow-cljs": "2.28.21"
+	}
 }

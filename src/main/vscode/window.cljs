@@ -1,6 +1,5 @@
 (ns vscode.window
   (:require ["vscode" :refer [window]]
-            [vscode.context :as context]
             [promesa.core :as p]
             [utils.interop :refer [js->clj' clj->js']]
             [ext.constants :as constants]))
@@ -23,14 +22,8 @@
              js->clj')))
 
 
-(defn create-output-channel [ctx]
-  (let [output-channel (.createOutputChannel window constants/log-channel)]
-    (context/add-to-global-state ctx constants/log-channel output-channel)))
-
-
-(defn get-output-channel [ctx]
-  (context/get-from-global-state ctx constants/log-channel))
-
+(defn create-log-output-channel []
+  (.createOutputChannel window constants/log-channel))
 
 (defn write-log [^OutputChannel channel text]
   (.appendLine channel text))

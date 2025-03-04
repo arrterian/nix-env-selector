@@ -1,17 +1,12 @@
-{ nixpkgs ? import <nixpkgs> {} }:
-let
-  inherit (nixpkgs) pkgs;
+with (import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/refs/tags/24.05.tar.gz") {});
 
+let
   nixPackages = [
-    pkgs.nodejs-12_x
-    pkgs.jdk11
+    nodejs_22
+    jdk17
   ];
 in
 pkgs.stdenv.mkDerivation {
   name = "vscode-env-selector";
   buildInputs = nixPackages;
-  postInstall =
-    ''
-      yarn install
-    '';
 }

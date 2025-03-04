@@ -2,12 +2,10 @@
   (:require ["fs" :refer [readdir]]
             [config :refer [config vscode-config]]
             [vscode.window :as w]
-            [vscode.env :refer [open-external-url]]
             [vscode.command :as cmd]
             [vscode.workspace :as workspace]
             [vscode.status-bar :as status-bar]
             [ext.lang :as l]
-            [ext.constants :as constants]
             [ext.nix-env :as env]
             [promesa.core :as p]
             [utils.helpers :refer [unrender-workspace]]))
@@ -38,30 +36,9 @@
                                                               :nix-env-selector/suggestion
                                                               false))))))
 
-(defn show-donate-message [state]
-  (let [show-message-info-path (str :nix-env-selector/donation)
-        show-message?          (.get state show-message-info-path true)
-        support-label          (-> l/lang :label :support)
-        dismiss-label          (-> l/lang :label :dismiss)
-        support-message        (-> l/lang :notification :support)]
-    (when show-message?
-      (p/chain (w/show-notification support-message
-                                    [support-label
-                                     dismiss-label])
-               (fn [answer]
-                 (.update state show-message-info-path false)
-                 (when
-                  (= answer support-label)
-                   (open-external-url constants/donate-url)))))))
-
-(defn show-reload-dialog [log-channel]
-  (let [reload-label   (-> l/lang :label :reload)
-        reload-message (-> l/lang :notification :env-applied)
-        dialog         (w/show-notification reload-message
-                                            [reload-label])]
-    (p/chain dialog
-             #(when (= reload-label %1)
-                (cmd/execute :workbench/action.reload-window log-channel)))))
+(defn show-reload-dialog []
+  (let [reload-message (-> l/lang :notification :env-applied)]
+    (w/show-notification reload-message [])))
 
 (defn load-env-by-path [nix-path status log-channel]
   (when nix-path

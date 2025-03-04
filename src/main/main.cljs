@@ -2,7 +2,7 @@
   (:require [config :refer [config update-config!]]
             [promesa.core :as p]
             [vscode.status-bar :as status]
-            [vscode.context :refer [subsciribe global-state]]
+            [vscode.context :refer [subsciribe]]
             [vscode.command :as cmd]
             [vscode.window :as w]
             [ext.actions :as act]
@@ -11,8 +11,7 @@
             [utils.helpers :refer [render-env-status]]))
 
 (defn activate [ctx]
-  (w/create-output-channel ctx)
-  (let [log-channel (w/get-output-channel ctx)]
+  (let [log-channel (w/create-log-output-channel)]
     (w/write-log log-channel "Initializing config...")
     (update-config!)
     (w/write-log log-channel (str "Loaded config: " @config))

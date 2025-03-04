@@ -9,6 +9,7 @@
   (.registerCommand commands
                     (keyword-to-path cmd-id)
                     (clj->js' handler)))
+
 (defn execute [cmd-id log-channel]
   (w/write-log log-channel (str "Executing command: " cmd-id))
   (.executeCommand commands
