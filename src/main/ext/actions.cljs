@@ -47,7 +47,8 @@
                      status)
     (->> (env/get-nix-env-async {:nix-config     nix-path
                                  :args           (:nix-args @config)
-                                 :nix-shell-path (:nix-shell-path @config)}
+                                 :nix-shell-path (:nix-shell-path @config)
+                                 :use-flakes     (:use-flakes @config)}
                                 log-channel)
          (p/map (fn [env-vars]
                   (when env-vars

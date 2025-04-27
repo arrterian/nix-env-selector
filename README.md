@@ -3,7 +3,7 @@ Hi folks,
 My name is Roman Valihura. I'm the author of this extension. I'm Ukrainian.
 I was born in Ukraine. I'm living here at the moment.
 
-As you all know Russia invaded my country. 
+As you all know Russia invaded my country.
 Russia has already killed thousands of civilians and continues the war and terror in Ukraine.
 I have the luck that my region is pretty far from the frontline. But even here, I'm living in the air-alarm reality.
 The reality where you should wake up in the middle of the night and go into the shelter. Because a rocket flies over your region.
@@ -49,7 +49,7 @@ However, this process can quickly become tedious.
 -   Install [Nix package manager](https://nixos.org/nix/).
 -   Restart VS Code (to make sure that `nix-shell` is in the PATH)
 -   [Install the extension](https://marketplace.visualstudio.com/items?itemName=arrterian.nix-env-selector).
--   Create the Nix environment config (like `default.nix` or `shell.nix`) in
+-   Create the Nix environment config (like `default.nix` or `shell.nix` or `flake.nix`) in
     the root of your project's workspace.
 -   Open Command Palette (<kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd>)
     and run `Nix-Env: Select Environment` command.
@@ -111,6 +111,8 @@ file (located in the root of the workspace). Here are the configuration settings
 | `nixEnvSelector.packages`     | []      | List packages using as `-p` nix-shell args                    |
 | `nixEnvSelector.args`         | null    | Custom args string for nix-shell. EX: `-A <something> --pure` |
 | `nixEnvSelector.nixShellPath` | null    | Custom path for nix-shell executable                          |
+| `nixEnvSelector.useFlakes` | false    | Enable support for `flake.nix`                          |
+
 
 ## Supported Platforms
 

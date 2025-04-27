@@ -19,9 +19,10 @@
       (if (or (not-empty (:nix-file @config)) (not-empty (:nix-packages @config)))
         (try
           (-> (env/get-nix-env-sync {:nix-config     (:nix-file @config)
-                                    :packages       (:nix-packages @config)
-                                    :args           (:nix-args @config)
-                                    :nix-shell-path (:nix-shell-path @config)}
+                                     :packages       (:nix-packages @config)
+                                     :args           (:nix-args @config)
+                                     :nix-shell-path (:nix-shell-path @config)
+                                     :use-flakes     (:use-flakes @config)}
                                     log-channel)
               (env/set-current-env))
           (->> status-bar
