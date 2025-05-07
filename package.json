@@ -2,7 +2,7 @@
 	"name": "nix-env-selector",
 	"displayName": "Nix Environment Selector",
 	"description": "Allows switch environment for Visual Studio Code and extensions based on Nix config file.",
-	"version": "1.0.12",
+	"version": "1.1.0",
 	"keywords": [
 		"nix",
 		"nix-env",
@@ -69,7 +69,12 @@
 					"type": "string",
 					"deprecationMessage": "[DEPRECATED] Use 'args' instead",
 					"description": "Attribute path (nix-shell -A)"
-				}
+				},
+        "nixEnvSelector.useFlakes": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable support for Nix flakes"
+        }
 			}
 		},
 		"commands": [
