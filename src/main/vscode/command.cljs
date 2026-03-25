@@ -14,3 +14,6 @@
   (w/write-log log-channel (str "Executing command: " cmd-id))
   (.executeCommand commands
                    (keyword-to-path cmd-id)))
+
+(defn execute-raw [cmd-str]
+  (.executeCommand commands cmd-str))

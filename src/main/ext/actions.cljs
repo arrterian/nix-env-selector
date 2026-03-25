@@ -29,17 +29,20 @@
         dismiss-label (-> l/lang :label :dismiss)
         dialog        (w/show-notification (-> l/lang :notification :env-available)
                                            [select-label dismiss-label])]
-    (p/mapcat dialog
-              #((cond
+    (p/mapcat #(cond
                   (= select-label %1) (cmd/execute :nix-env-selector/select-env log-channel)
                   (= dismiss-label %1) (workspace/config-set! vscode-config
                                                               :workspace
                                                               :nix-env-selector/suggestion
-                                                              false))))))
+                                                              false))
+              dialog)))
 
 (defn show-reload-dialog []
-  (let [reload-message (-> l/lang :notification :env-applied)]
-    (w/show-notification reload-message [])))
+  (let [reload-label   (-> l/lang :label :reload)
+        reload-message (-> l/lang :notification :env-applied)]
+    (p/mapcat #(when (= reload-label %1)
+                 (cmd/execute-raw "workbench.action.reloadWindow"))
+              (w/show-notification reload-message [reload-label]))))
 
 (defn load-env-by-path [nix-path status log-channel ctx]
   (when nix-path
@@ -63,7 +66,7 @@
          (p/mapcat show-reload-dialog))))
 
 (defn hit-nix-environment [status log-channel ctx]
-  (w/write-log log-channel "Running action: Hit environment")
+  (w/write-log log-channel "Running action: Pick up environment changes")
   (fn []
     (-> (:nix-file @config)
         (load-env-by-path status log-channel ctx))))

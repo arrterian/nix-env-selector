@@ -2,7 +2,7 @@
 
 (def ^:private lang-eng
   {:notification {:env-restored  "Original vscode environment will apply after reload"
-                  :env-applied   "Applied. Reload your window using command palette"
+                  :env-applied   "Applied. Reload your window to activate the environment"
                   :env-available "The nix environment is available in your workspace"}
    :label        {:env-loading               "$(loading~spin) Applying environment..."
                   :env-selected              "$(beaker) Environment: %ENV_NAME%"

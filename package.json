@@ -60,16 +60,6 @@
 					"default": null,
 					"description": "Custom path to nix-shell executable"
 				},
-				"nixEnvSelector.nixShellConfig": {
-					"type": "string",
-					"deprecationMessage": "[DEPRECATED] Use 'nixFile' instead",
-					"description": "Path for nix-shell config"
-				},
-				"nixEnvSelector.nixShellConfigAttr": {
-					"type": "string",
-					"deprecationMessage": "[DEPRECATED] Use 'args' instead",
-					"description": "Attribute path (nix-shell -A)"
-				},
         "nixEnvSelector.useFlakes": {
           "type": "boolean",
           "default": false,
@@ -89,7 +79,7 @@
 			},
 			{
 				"command": "nixEnvSelector.hitEnv",
-				"title": "Nix-Env: Hit environment"
+				"title": "Nix-Env: Pick up environment changes"
 			}
 		]
 	},
