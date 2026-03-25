@@ -5,17 +5,12 @@ I was born in Ukraine. I'm living here at the moment.
 
 As you all know Russia invaded my country.
 Russia has already killed thousands of civilians and continues the war and terror in Ukraine.
-I have the luck that my region is pretty far from the frontline. But even here, I'm living in the air-alarm reality.
-The reality where you should wake up in the middle of the night and go into the shelter. Because a rocket flies over your region.
 
+If you have a wish and ability to support Ukraine, please consider donating to the **Come Back Alive** foundation — one of the largest and most transparent Ukrainian charitable funds supporting the Armed Forces of Ukraine.
 
-Like a lot of Ukrainians now I became a volunteer in this hard time for my country.
-We with a team producing Individual First Aid Kits for the Ukrainian army.
-If you have a wish and ability to support the activity, you can make a donation on our website, which we made to collect funds for producing First Aid Kits.
+[Donate to Come Back Alive](https://savelife.in.ua/en/donate-en/#donate-army-card-once)
 
-More datails on the [aidkit.shop](https://aidkit.shop)
-
-Thank you for your attention!
+Thank you for your support!
 
 
 # Nix Environment Selector
