@@ -15,37 +15,22 @@
       (catch js/Error _
         false))))
 
-(defn ^:private get-shell-env-cmd [{:keys [packages
-                                           nix-shell-path
-                                           nix-config
-                                           args]}]
-  (str (if (empty? nix-shell-path)
-         "nix-shell"
-         (s/replace nix-shell-path #" " "\\ "))
-       " "
-       (cond
-         (not-empty nix-config)
-         (str "\"" nix-config "\"")
-
-         (not-empty packages)
-         (list-to-args "-p" packages)
-
-         :else
-         (throw (js/Error. "Nix-config or list of packages is necessary")))
-       " --run export"
-       (when args
-         (str " " args))))
-
-(defn ^:private get-flake-env-cmd [{:keys [nix-path dir args]}]
-  (str (if (empty? nix-path)
-         "nix"
-         (s/replace nix-path #" " "\\ "))
-       " develop "
-       (when dir
-         (str "\"" dir "\""))
-       " --command env"
-       (when args
-         (str " " args))))
+(defn ^:private build-nix-cmd [{:keys [options dir is-flake capture-env?]}]
+  (let [{:keys [nix-shell-path nix-config packages args]} options]
+    (if is-flake
+      (str (if (empty? nix-shell-path) "nix" (s/replace nix-shell-path #" " "\\ "))
+           " develop"
+           (when dir (str " \"" dir "\""))
+           (when capture-env? " --command env")
+           (when args (str " " args)))
+      (str (if (empty? nix-shell-path) "nix-shell" (s/replace nix-shell-path #" " "\\ "))
+           " "
+           (cond
+             (not-empty nix-config) (str "\"" nix-config "\"")
+             (not-empty packages)   (list-to-args "-p" packages)
+             :else (throw (js/Error. "Nix-config or list of packages is necessary")))
+           (when capture-env? " --run export")
+           (when args (str " " args))))))
 
 (defn ^:private parse-exported-vars [output]
   (->> (s/split output #"declare -x")
@@ -68,9 +53,7 @@
 (defn get-nix-env-sync [{:keys [use-flakes] :as options} log-channel]
   (let [dir (dirname (:nix-config options))
         is-flake (and use-flakes (has-flake? dir))
-        cmd (if is-flake
-              (get-flake-env-cmd (assoc options :dir dir))
-              (get-shell-env-cmd options))
+        cmd (build-nix-cmd {:options options :dir dir :is-flake is-flake :capture-env? true})
         parser (if is-flake parse-env-vars parse-exported-vars)]
     (w/write-log log-channel (str "Running command synchronously: " cmd))
     (-> (execSync (clj->js cmd {:cwd dir}))
@@ -81,9 +64,7 @@
   (let [env-result (p/deferred)
         dir (dirname (:nix-config options))
         is-flake (and use-flakes (has-flake? dir))
-        cmd (if is-flake
-              (get-flake-env-cmd (assoc options :dir dir))
-              (get-shell-env-cmd options))
+        cmd (build-nix-cmd {:options options :dir dir :is-flake is-flake :capture-env? true})
         parser (if is-flake parse-env-vars parse-exported-vars)]
     (w/write-log log-channel (str "Running command " (if is-flake "with flake" "with nix-shell") ": " cmd))
     (exec (clj->js cmd {:cwd dir})
@@ -99,3 +80,8 @@
   (mapv (fn [[name value]]
           (aset js/process.env name value))
         env-vars))
+
+(defn get-shell-open-cmd [{:keys [use-flakes nix-config] :as options}]
+  (let [dir      (when (not-empty nix-config) (dirname nix-config))
+        is-flake (and use-flakes dir (has-flake? dir))]
+    (build-nix-cmd {:options options :dir dir :is-flake is-flake :capture-env? false})))

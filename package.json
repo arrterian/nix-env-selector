@@ -74,6 +74,11 @@
           "type": "boolean",
           "default": false,
           "description": "Enable support for Nix flakes"
+        },
+        "nixEnvSelector.patchTerminals": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically open new user terminals inside nix-shell"
         }
 			}
 		},

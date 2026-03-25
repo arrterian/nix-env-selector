@@ -2,9 +2,10 @@
   (:require [config :refer [config update-config!]]
             [promesa.core :as p]
             [vscode.status-bar :as status]
-            [vscode.context :refer [subsciribe]]
+            [vscode.context :refer [subscribe]]
             [vscode.command :as cmd]
             [vscode.window :as w]
+            [vscode.terminal :as term]
             [ext.actions :as act]
             [ext.nix-env :as env]
             [ext.lang :refer [lang]]
@@ -39,7 +40,22 @@
                     (act/show-propose-env-dialog log-channel))))
 
       ;; register user commands
-      (subsciribe ctx (cmd/create :nix-env-selector/select-env (act/select-nix-environment status-bar log-channel)))
-      (subsciribe ctx (cmd/create :nix-env-selector/hit-env (act/hit-nix-environment status-bar log-channel))))))
+      (subscribe ctx (cmd/create :nix-env-selector/select-env (act/select-nix-environment status-bar log-channel)))
+      (subscribe ctx (cmd/create :nix-env-selector/hit-env (act/hit-nix-environment status-bar log-channel)))
+
+      ;; patch all new terminals to open inside nix-shell
+      (subscribe ctx (term/on-did-open-terminal
+                        (fn [terminal]
+                          (when (and (:patch-terminals? @config)
+                                     (term/user-terminal? terminal)
+                                     (or (not-empty (:nix-file @config))
+                                         (not-empty (:nix-packages @config))))
+                            (term/send-text terminal
+                                           (env/get-shell-open-cmd
+                                            {:nix-config     (:nix-file @config)
+                                             :packages       (:nix-packages @config)
+                                             :nix-shell-path (:nix-shell-path @config)
+                                             :use-flakes     (:use-flakes @config)
+                                             :args           (:nix-args @config)})))))))))
 
 (defn deactivate [])

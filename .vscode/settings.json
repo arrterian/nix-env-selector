@@ -11,5 +11,5 @@
         "out": true // set this to false to include "out" folder in search results
     },
     "nixEnvSelector.suggestion": false,
-    "nixEnvSelector.nixFile": "${workspaceRoot}/default.nix",
+    "nixEnvSelector.nixFile": "${workspaceFolder}/default.nix",
 }

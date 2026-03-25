@@ -2,7 +2,7 @@
 
 (set! *warn-on-infer* false)
 
-(defn subsciribe [ctx cmd]
+(defn subscribe [ctx cmd]
   (.push (.-subscriptions ctx) cmd))
 
 (defn global-state [ctx]
