@@ -24,6 +24,3 @@
 
 (defn create-log-output-channel []
   (.createOutputChannel window constants/log-channel))
-
-(defn write-log [^OutputChannel channel text]
-  (.appendLine channel text))

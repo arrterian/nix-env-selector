@@ -1,6 +1,7 @@
 (ns config
   (:require [vscode.workspace :as workspace]
-            [utils.helpers :refer [render-workspace]]))
+            [utils.helpers :refer [render-workspace]]
+            [utils.logger :as logger]))
 
 (defonce config (atom {}))
 
@@ -18,6 +19,9 @@
                     :nix-shell-path (-> (workspace/config-get vscode-config :nix-env-selector/nix-shell-path)
                                         (#(when %1 (render-workspace %1 workspace-root))))
                     :use-flakes     (workspace/config-get vscode-config :nix-env-selector/use-flakes)
-                    :patch-terminals? (workspace/config-get vscode-config :nix-env-selector/patch-terminals)})))
+                    :patch-terminals? (workspace/config-get vscode-config :nix-env-selector/patch-terminals)
+                    :log-level      (or (workspace/config-get vscode-config :nix-env-selector/log-level) "info")})))
 
-(workspace/on-config-change update-config!)
+(workspace/on-config-change (fn []
+                              (update-config!)
+                              (logger/set-level! (:log-level @config))))

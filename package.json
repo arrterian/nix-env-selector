@@ -69,6 +69,18 @@
           "type": "boolean",
           "default": true,
           "description": "Automatically open new user terminals inside nix-shell"
+        },
+        "nixEnvSelector.logLevel": {
+          "type": "string",
+          "default": "info",
+          "enum": ["debug", "info", "warn", "error"],
+          "enumDescriptions": [
+            "Verbose output including raw stdout/stderr from nix commands",
+            "Normal operational messages (default)",
+            "Warnings only",
+            "Errors only"
+          ],
+          "description": "Controls the verbosity of the Nix Env Selector output channel"
         }
 			}
 		},
