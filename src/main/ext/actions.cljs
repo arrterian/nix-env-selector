@@ -5,6 +5,7 @@
             [vscode.command :as cmd]
             [vscode.workspace :as workspace]
             [vscode.status-bar :as status-bar]
+            [vscode.context :as vscode-ctx]
             [ext.lang :as l]
             [ext.nix-env :as env]
             [promesa.core :as p]
@@ -40,7 +41,7 @@
   (let [reload-message (-> l/lang :notification :env-applied)]
     (w/show-notification reload-message [])))
 
-(defn load-env-by-path [nix-path status log-channel]
+(defn load-env-by-path [nix-path status log-channel ctx]
   (when nix-path
     (w/write-log log-channel (str "Loading env in path: " nix-path))
     (status-bar/show {:text (-> l/lang :label :env-loading)}
@@ -53,6 +54,7 @@
          (p/map (fn [env-vars]
                   (when env-vars
                     (env/set-current-env env-vars)
+                    (vscode-ctx/apply-env-collection! ctx env-vars)
                     :ok)))
          (p/map (fn [result]
                   (when result
@@ -60,13 +62,13 @@
                                       :command :nix-env-selector/select-env} status))))
          (p/mapcat show-reload-dialog))))
 
-(defn hit-nix-environment [status log-channel]
+(defn hit-nix-environment [status log-channel ctx]
   (w/write-log log-channel "Running action: Hit environment")
   (fn []
     (-> (:nix-file @config)
-        (load-env-by-path status log-channel))))
+        (load-env-by-path status log-channel ctx))))
 
-(defn select-nix-environment [status log-channel]
+(defn select-nix-environment [status log-channel ctx]
   (w/write-log log-channel "Running action: Select environment")
   (fn []
     (->> (get-nix-files (:workspace-root @config))
@@ -82,6 +84,7 @@
                     (do
                       (w/write-log log-channel "Selected to disable Nix environment")
                       (status-bar/hide status)
+                      (vscode-ctx/clear-env-collection! ctx)
                       (workspace/config-set! vscode-config
                                              :workspace
                                              :nix-env-selector/nix-file
@@ -99,5 +102,5 @@
                                              :nix-env-selector/nix-file
                                              (unrender-workspace nix-file (:workspace-root @config)))
                       nix-file))))
-         (p/mapcat #(load-env-by-path %1 status log-channel))
+         (p/mapcat #(load-env-by-path %1 status log-channel ctx))
          (p/error #(js/console.error %)))))

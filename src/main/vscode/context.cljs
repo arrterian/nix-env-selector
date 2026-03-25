@@ -5,13 +5,12 @@
 (defn subscribe [ctx cmd]
   (.push (.-subscriptions ctx) cmd))
 
-(defn global-state [ctx]
-  (.-globalState ctx))
+(defn apply-env-collection! [ctx env-vars]
+  (let [collection (.-environmentVariableCollection ctx)]
+    (.clear collection)
+    (doseq [[name value] env-vars]
+      (when (and name value)
+        (.replace collection name value)))))
 
-(defn add-to-global-state [ctx key value]
-  (let [state (global-state ctx)]
-    (.update state key value)))
-
-(defn get-from-global-state [ctx key]
-  (let [state (global-state ctx)]
-    (.get state key)))
+(defn clear-env-collection! [ctx]
+  (.clear (.-environmentVariableCollection ctx)))

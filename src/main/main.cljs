@@ -2,10 +2,9 @@
   (:require [config :refer [config update-config!]]
             [promesa.core :as p]
             [vscode.status-bar :as status]
-            [vscode.context :refer [subscribe]]
+            [vscode.context :refer [subscribe apply-env-collection!]]
             [vscode.command :as cmd]
             [vscode.window :as w]
-            [vscode.terminal :as term]
             [ext.actions :as act]
             [ext.nix-env :as env]
             [ext.lang :refer [lang]]
@@ -19,13 +18,14 @@
     (let [status-bar     (status/create :left 100)]
       (if (or (not-empty (:nix-file @config)) (not-empty (:nix-packages @config)))
         (try
-          (-> (env/get-nix-env-sync {:nix-config     (:nix-file @config)
-                                     :packages       (:nix-packages @config)
-                                     :args           (:nix-args @config)
-                                     :nix-shell-path (:nix-shell-path @config)
-                                     :use-flakes     (:use-flakes @config)}
-                                    log-channel)
-              (env/set-current-env))
+          (let [env-vars (env/get-nix-env-sync {:nix-config     (:nix-file @config)
+                                                :packages       (:nix-packages @config)
+                                                :args           (:nix-args @config)
+                                                :nix-shell-path (:nix-shell-path @config)
+                                                :use-flakes     (:use-flakes @config)}
+                                               log-channel)]
+            (env/set-current-env env-vars)
+            (apply-env-collection! ctx env-vars))
           (->> status-bar
               (status/show {:text    (render-env-status lang (:nix-file @config))
                             :command :nix-env-selector/select-env}))
@@ -40,22 +40,7 @@
                     (act/show-propose-env-dialog log-channel))))
 
       ;; register user commands
-      (subscribe ctx (cmd/create :nix-env-selector/select-env (act/select-nix-environment status-bar log-channel)))
-      (subscribe ctx (cmd/create :nix-env-selector/hit-env (act/hit-nix-environment status-bar log-channel)))
-
-      ;; patch all new terminals to open inside nix-shell
-      (subscribe ctx (term/on-did-open-terminal
-                        (fn [terminal]
-                          (when (and (:patch-terminals? @config)
-                                     (term/user-terminal? terminal)
-                                     (or (not-empty (:nix-file @config))
-                                         (not-empty (:nix-packages @config))))
-                            (term/send-text terminal
-                                           (env/get-shell-open-cmd
-                                            {:nix-config     (:nix-file @config)
-                                             :packages       (:nix-packages @config)
-                                             :nix-shell-path (:nix-shell-path @config)
-                                             :use-flakes     (:use-flakes @config)
-                                             :args           (:nix-args @config)})))))))))
+      (subscribe ctx (cmd/create :nix-env-selector/select-env (act/select-nix-environment status-bar log-channel ctx)))
+      (subscribe ctx (cmd/create :nix-env-selector/hit-env (act/hit-nix-environment status-bar log-channel ctx))))))
 
 (defn deactivate [])

@@ -80,8 +80,3 @@
   (mapv (fn [[name value]]
           (aset js/process.env name value))
         env-vars))
-
-(defn get-shell-open-cmd [{:keys [use-flakes nix-config] :as options}]
-  (let [dir      (when (not-empty nix-config) (dirname nix-config))
-        is-flake (and use-flakes dir (has-flake? dir))]
-    (build-nix-cmd {:options options :dir dir :is-flake is-flake :capture-env? false})))
