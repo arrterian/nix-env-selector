@@ -4,13 +4,13 @@ All notable changes to the extension will be documented in this file.
 
 ## [1.2.0]
 
-- Replace `sendText`/`onDidOpenTerminal` terminal patching with VS Code's `environmentVariableCollection` API — nix env vars are now injected into all terminal types including task runners, AI agent tools, and test frameworks
+- Inject nix env vars into all terminal types (interactive shells, task runners, AI agent tools, test frameworks) using VS Code's `environmentVariableCollection` API [[ISSUE-31](https://github.com/arrterian/nix-env-selector/issues/31)] [[ISSUE-55](https://github.com/arrterian/nix-env-selector/issues/55)]
 
-- Set `environmentVariableCollection` as persistent so the last known environment is restored at next startup before any extension code runs, covering `runOn: folderOpen` tasks
+- Persist the environment collection across restarts so the last known environment is restored before any extension code runs, covering `runOn: folderOpen` tasks [[ISSUE-55](https://github.com/arrterian/nix-env-selector/issues/55)]
 
 - Add `Reload Window` button to the post-apply notification so the environment can be activated without opening the command palette
 
-- Rename `Hit environment` command to `Refresh environment`
+- Rename `Hit environment` command to `Sync environment changes`
 
 - Add structured logger with ISO-8601 timestamps and severity levels (`DEBUG`, `INFO`, `WARN`, `ERROR`)
 
@@ -19,6 +19,8 @@ All notable changes to the extension will be documented in this file.
 - Log raw stdout/stderr from nix commands at `DEBUG` level and full error stack traces at `ERROR` level
 
 - Fix notification "Select" button doing nothing when `default.nix` is detected
+
+- Improved error messages
 
 ## [1.0.0]
 

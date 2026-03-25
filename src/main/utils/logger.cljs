@@ -8,6 +8,9 @@
 (defn init! [channel]
   (reset! ch channel))
 
+(defn show-channel! []
+  (when @ch (.show @ch)))
+
 (defonce ^:private configured-level (atom "info"))
 
 (defn set-level! [level]

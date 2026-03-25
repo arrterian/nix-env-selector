@@ -105,13 +105,15 @@ Bingo 🎉🎉🎉. Everything is working now 😈
 You can configure the extension in `.vscode/settings.json`
 file (located in the root of the workspace). Here are the configuration settings:
 
-| Setting                       | Default | Description                                                   |
-| ----------------------------- | ------- | ------------------------------------------------------------- |
-| `nixEnvSelector.nixFile`      | null    | Path to the Nix config file                                   |
-| `nixEnvSelector.packages`     | []      | List packages using as `-p` nix-shell args                    |
-| `nixEnvSelector.args`         | null    | Custom args string for nix-shell. EX: `-A <something> --pure` |
-| `nixEnvSelector.nixShellPath` | null    | Custom path for nix-shell executable                          |
-| `nixEnvSelector.useFlakes` | false    | Enable support for `flake.nix`                          |
+| Setting                        | Default | Description                                                                  |
+| ------------------------------ | ------- | ---------------------------------------------------------------------------- |
+| `nixEnvSelector.nixFile`       | null    | Path to the Nix config file                                                  |
+| `nixEnvSelector.packages`      | []      | List of packages passed as `-p` args to nix-shell                           |
+| `nixEnvSelector.args`          | null    | Additional args for nix-shell. EX: `-A <something> --pure`                  |
+| `nixEnvSelector.nixShellPath`  | null    | Custom path to the nix-shell executable                                      |
+| `nixEnvSelector.useFlakes`     | false   | Enable support for `flake.nix`                                               |
+| `nixEnvSelector.suggestion`    | true    | Show a proposal to select an environment when a `.nix` file is detected      |
+| `nixEnvSelector.logLevel`      | `info`  | Output channel verbosity: `debug` \| `info` \| `warn` \| `error`            |
 
 
 ## Supported Platforms

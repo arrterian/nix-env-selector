@@ -1,11 +1,12 @@
 (ns utils.interop
-  (:require [camel-snake-kebab.core :refer [->kebab-case-keyword ->camelCaseKeyword ->camelCaseString]]
+  (:require [camel-snake-kebab.core :refer [->kebab-case-keyword ->camelCaseString]]
             [clojure.walk :refer [postwalk]]
             [goog.object :as obj]))
 
 (defn ^:private numeric-string? [s]
   (and (string? s)
        (some? (re-matches #"[0-9]+" s))))
+
 (defn ^:private pascal-case? [s]
   (and (string? s)
        (contains? #{\A \B \C \D \E \F \G \H \I \J \K \L \M \N \O \P \Q \R \S \T \U \V \W \X \Y \Z}

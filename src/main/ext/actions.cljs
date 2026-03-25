@@ -67,7 +67,9 @@
                     (status-bar/show {:text    (-> l/lang :label :env-need-reload)
                                       :command :nix-env-selector/select-env} status))))
          (p/mapcat show-reload-dialog)
-         (p/error (fn [e] (logger/error "Failed to load environment" e))))))
+         (p/error (fn [e]
+                    (logger/error "Failed to load environment" e)
+                    (w/show-error-notification (-> l/lang :notification :env-error)))))))
 
 (defn hit-nix-environment [status ctx]
   (logger/info "Running action: Refresh environment")
@@ -110,4 +112,6 @@
                                              (unrender-workspace nix-file (:workspace-root @config)))
                       nix-file))))
          (p/mapcat #(load-env-by-path %1 status ctx))
-         (p/error #(logger/error "Select environment failed" %)))))
+         (p/error (fn [e]
+                    (logger/error "Select environment failed" e)
+                    (w/show-error-notification (-> l/lang :notification :env-error)))))))

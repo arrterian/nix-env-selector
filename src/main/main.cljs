@@ -34,7 +34,8 @@
               (status/show {:text    (render-env-status lang (:nix-file @config))
                             :command :nix-env-selector/select-env}))
           (catch :default e
-            (logger/error "Failed to apply environment on startup" e)))
+            (logger/error "Failed to apply environment on startup" e)
+            (w/show-error-notification (-> lang :notification :env-error))))
 
         ;; show notification that nix config available
         ;; if workspace contains .nix file(s)

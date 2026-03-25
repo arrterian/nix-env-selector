@@ -91,7 +91,7 @@
 			},
 			{
 				"command": "nixEnvSelector.hitEnv",
-				"title": "Nix-Env: Pick up environment changes"
+				"title": "Nix-Env: Sync environment changes"
 			}
 		]
 	},
