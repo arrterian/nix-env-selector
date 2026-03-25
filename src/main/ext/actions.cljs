@@ -9,6 +9,7 @@
             [ext.lang :as l]
             [ext.nix-env :as env]
             [promesa.core :as p]
+            [utils.logger :as logger]
             [utils.helpers :refer [unrender-workspace]]))
 
 (defn get-nix-files [workspace-root]
@@ -24,17 +25,19 @@
                           (not))) %1)
            files-res)))
 
-(defn show-propose-env-dialog [log-channel]
+(defn show-propose-env-dialog []
   (let [select-label  (-> l/lang :label :select-env)
         dismiss-label (-> l/lang :label :dismiss)
         dialog        (w/show-notification (-> l/lang :notification :env-available)
                                            [select-label dismiss-label])]
     (p/mapcat #(cond
-                  (= select-label %1) (cmd/execute :nix-env-selector/select-env log-channel)
-                  (= dismiss-label %1) (workspace/config-set! vscode-config
-                                                              :workspace
-                                                              :nix-env-selector/suggestion
-                                                              false))
+                  (= select-label %1)  (do (logger/info "User chose to select Nix environment")
+                                           (cmd/execute :nix-env-selector/select-env))
+                  (= dismiss-label %1) (do (logger/info "User dismissed Nix environment suggestion")
+                                          (workspace/config-set! vscode-config
+                                                                  :workspace
+                                                                  :nix-env-selector/suggestion
+                                                                  false)))
               dialog)))
 
 (defn show-reload-dialog []
@@ -44,35 +47,36 @@
                  (cmd/execute-raw "workbench.action.reloadWindow"))
               (w/show-notification reload-message [reload-label]))))
 
-(defn load-env-by-path [nix-path status log-channel ctx]
+(defn load-env-by-path [nix-path status ctx]
   (when nix-path
-    (w/write-log log-channel (str "Loading env in path: " nix-path))
+    (logger/info (str "Loading environment from: " nix-path))
     (status-bar/show {:text (-> l/lang :label :env-loading)}
                      status)
     (->> (env/get-nix-env-async {:nix-config     nix-path
                                  :args           (:nix-args @config)
                                  :nix-shell-path (:nix-shell-path @config)
-                                 :use-flakes     (:use-flakes @config)}
-                                log-channel)
+                                 :use-flakes     (:use-flakes @config)})
          (p/map (fn [env-vars]
                   (when env-vars
                     (env/set-current-env env-vars)
                     (vscode-ctx/apply-env-collection! ctx env-vars)
+                    (logger/info (str "Applied " (count env-vars) " variables to extension host and terminal collection"))
                     :ok)))
          (p/map (fn [result]
                   (when result
                     (status-bar/show {:text    (-> l/lang :label :env-need-reload)
                                       :command :nix-env-selector/select-env} status))))
-         (p/mapcat show-reload-dialog))))
+         (p/mapcat show-reload-dialog)
+         (p/error (fn [e] (logger/error "Failed to load environment" e))))))
 
-(defn hit-nix-environment [status log-channel ctx]
-  (w/write-log log-channel "Running action: Pick up environment changes")
+(defn hit-nix-environment [status ctx]
+  (logger/info "Running action: Refresh environment")
   (fn []
     (-> (:nix-file @config)
-        (load-env-by-path status log-channel ctx))))
+        (load-env-by-path status ctx))))
 
-(defn select-nix-environment [status log-channel ctx]
-  (w/write-log log-channel "Running action: Select environment")
+(defn select-nix-environment [status ctx]
+  (logger/info "Running action: Select environment")
   (fn []
     (->> (get-nix-files (:workspace-root @config))
          (p/mapcat #(w/show-quick-pick {:place-holder (-> l/lang :label :select-config-placeholder)}
@@ -85,7 +89,7 @@
                   (cond
                     (= "disable" (:id nix-file-name))
                     (do
-                      (w/write-log log-channel "Selected to disable Nix environment")
+                      (logger/info "Disabling Nix environment")
                       (status-bar/hide status)
                       (vscode-ctx/clear-env-collection! ctx)
                       (workspace/config-set! vscode-config
@@ -99,11 +103,11 @@
 
                     (not-empty nix-file-name)
                     (let [nix-file (str (:workspace-root @config) "/" (:id nix-file-name))]
-                      (w/write-log log-channel (str "Selected Nix file: " nix-file))
+                      (logger/info (str "Selected Nix file: " nix-file))
                       (workspace/config-set! vscode-config
                                              :workspace
                                              :nix-env-selector/nix-file
                                              (unrender-workspace nix-file (:workspace-root @config)))
                       nix-file))))
-         (p/mapcat #(load-env-by-path %1 status log-channel ctx))
-         (p/error #(js/console.error %)))))
+         (p/mapcat #(load-env-by-path %1 status ctx))
+         (p/error #(logger/error "Select environment failed" %)))))
