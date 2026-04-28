@@ -31,8 +31,8 @@
             (apply-env-collection! ctx env-vars)
             (logger/info (str "Applied " (count env-vars) " variables to extension host and terminal collection")))
           (->> status-bar
-              (status/show {:text    (render-env-status lang (:nix-file @config))
-                            :command :nix-env-selector/select-env}))
+               (status/show {:text    (render-env-status lang (:nix-file @config))
+                             :command :nix-env-selector/select-env}))
           (catch :default e
             (logger/error "Failed to apply environment on startup" e)
             (w/show-error-notification (-> lang :notification :env-error))))
@@ -40,8 +40,8 @@
         ;; show notification that nix config available
         ;; if workspace contains .nix file(s)
         (p/chain (act/get-nix-files (:workspace-root @config))
-                #(when (and (:suggest-nix? @config)
-                            (> (count %1) 0))
+                 #(when (and (:suggest-nix? @config)
+                             (> (count %1) 0))
                     (act/show-propose-env-dialog))))
 
       ;; register user commands

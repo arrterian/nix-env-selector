@@ -31,13 +31,13 @@
         dialog        (w/show-notification (-> l/lang :notification :env-available)
                                            [select-label dismiss-label])]
     (p/mapcat #(cond
-                  (= select-label %1)  (do (logger/info "User chose to select Nix environment")
-                                           (cmd/execute :nix-env-selector/select-env))
-                  (= dismiss-label %1) (do (logger/info "User dismissed Nix environment suggestion")
+                 (= select-label %1)  (do (logger/info "User chose to select Nix environment")
+                                          (cmd/execute :nix-env-selector/select-env))
+                 (= dismiss-label %1) (do (logger/info "User dismissed Nix environment suggestion")
                                           (workspace/config-set! vscode-config
-                                                                  :workspace
-                                                                  :nix-env-selector/suggestion
-                                                                  false)))
+                                                                 :workspace
+                                                                 :nix-env-selector/suggestion
+                                                                 false)))
               dialog)))
 
 (defn show-reload-dialog []
