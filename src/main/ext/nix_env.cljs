@@ -16,11 +16,15 @@
         false))))
 
 (defn ^:private build-nix-cmd [{:keys [options dir is-flake capture-env?]}]
-  (let [{:keys [nix-shell-path nix-config packages args]} options]
+  (let [{:keys [nix-shell-path nix-config packages args flake-dev-shell]} options
+        flake-ref (when dir
+                    (if (not-empty flake-dev-shell)
+                      (str dir "#" flake-dev-shell)
+                      dir))]
     (if is-flake
       (str (if (empty? nix-shell-path) "nix" (s/replace nix-shell-path #" " "\\ "))
            " develop"
-           (when dir (str " \"" dir "\""))
+           (when flake-ref (str " \"" flake-ref "\""))
            (when capture-env? " --command env")
            (when args (str " " args)))
       (str (if (empty? nix-shell-path) "nix-shell" (s/replace nix-shell-path #" " "\\ "))
@@ -88,6 +92,51 @@
                (logger/info (str "Parsed " (count vars) " environment variables"))
                vars))
            env-result)))
+
+(defn flake? [nix-path]
+  (and nix-path
+       (s/ends-with? nix-path "/flake.nix")))
+
+(defn ^:private extract-dev-shell-names [parsed]
+  (let [;; Newer "inventory" schema (Nix with flake-schemas):
+        ;; inventory.devShells.output.children.<system>.children.<name>
+        inventory-systems (get-in parsed ["inventory" "devShells" "output" "children"])
+        ;; Older flat schema: devShells.<system>.<name>
+        flat-systems (get parsed "devShells")
+        systems (or inventory-systems flat-systems)]
+    (->> (vals (or systems {}))
+         (filter map?)
+         (mapcat (fn [system-data]
+                   (or (keys (get system-data "children"))
+                       (when-not (contains? system-data "filtered")
+                         (keys system-data)))))
+         (distinct)
+         (vec))))
+
+(defn list-flake-dev-shells [{:keys [nix-shell-path nix-config]}]
+  (let [result (p/deferred)
+        dir (dirname nix-config)
+        nix-bin (if (empty? nix-shell-path) "nix" (s/replace nix-shell-path #" " "\\ "))
+        cmd (str nix-bin " flake show \"" dir "\" --json --no-write-lock-file")]
+    (logger/info (str "Listing flake devShells: " cmd))
+    (exec cmd
+          #js {:cwd dir :maxBuffer (* 32 1024 1024)}
+          (fn [err stdout stderr]
+            (if (nil? err)
+              (try
+                (let [parsed (js->clj (js/JSON.parse stdout))
+                      shell-names (extract-dev-shell-names parsed)]
+                  (logger/debug (str "flake show stdout length: " (count stdout)))
+                  (logger/info (str "Found devShells: " shell-names))
+                  (p/resolve! result shell-names))
+                (catch js/Error e
+                  (logger/error "Failed to parse flake show output" e)
+                  (p/reject! result e)))
+              (do
+                (logger/debug (str "stderr:\n" stderr))
+                (logger/error "nix flake show failed" (js/Error. stderr))
+                (p/reject! result err)))))
+    result))
 
 (defn set-current-env [env-vars]
   (mapv (fn [[name value]]

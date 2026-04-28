@@ -19,6 +19,7 @@
                     :nix-shell-path (-> (workspace/config-get vscode-config :nix-env-selector/nix-shell-path)
                                         (#(when %1 (render-workspace %1 workspace-root))))
                     :use-flakes     (workspace/config-get vscode-config :nix-env-selector/use-flakes)
+                    :flake-dev-shell (workspace/config-get vscode-config :nix-env-selector/flake-dev-shell)
                     :patch-terminals? (workspace/config-get vscode-config :nix-env-selector/patch-terminals)
                     :log-level      (or (workspace/config-get vscode-config :nix-env-selector/log-level) "info")})))
 
