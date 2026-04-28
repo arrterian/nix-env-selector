@@ -65,6 +65,11 @@
           "default": false,
           "description": "Enable support for Nix flakes"
         },
+        "nixEnvSelector.flakeDevShell": {
+          "type": "string",
+          "default": null,
+          "description": "Name of the flake devShell to activate (leave empty for default)"
+        },
         "nixEnvSelector.patchTerminals": {
           "type": "boolean",
           "default": true,

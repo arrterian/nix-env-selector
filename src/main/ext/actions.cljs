@@ -31,13 +31,13 @@
         dialog        (w/show-notification (-> l/lang :notification :env-available)
                                            [select-label dismiss-label])]
     (p/mapcat #(cond
-                  (= select-label %1)  (do (logger/info "User chose to select Nix environment")
-                                           (cmd/execute :nix-env-selector/select-env))
-                  (= dismiss-label %1) (do (logger/info "User dismissed Nix environment suggestion")
+                 (= select-label %1)  (do (logger/info "User chose to select Nix environment")
+                                          (cmd/execute :nix-env-selector/select-env))
+                 (= dismiss-label %1) (do (logger/info "User dismissed Nix environment suggestion")
                                           (workspace/config-set! vscode-config
-                                                                  :workspace
-                                                                  :nix-env-selector/suggestion
-                                                                  false)))
+                                                                 :workspace
+                                                                 :nix-env-selector/suggestion
+                                                                 false)))
               dialog)))
 
 (defn show-reload-dialog []
@@ -49,13 +49,16 @@
 
 (defn load-env-by-path [nix-path status ctx]
   (when nix-path
-    (logger/info (str "Loading environment from: " nix-path))
+    (logger/info (str "Loading environment from: " nix-path
+                      (when (not-empty (:flake-dev-shell @config))
+                        (str " (devShell: " (:flake-dev-shell @config) ")"))))
     (status-bar/show {:text (-> l/lang :label :env-loading)}
                      status)
-    (->> (env/get-nix-env-async {:nix-config     nix-path
-                                 :args           (:nix-args @config)
-                                 :nix-shell-path (:nix-shell-path @config)
-                                 :use-flakes     (:use-flakes @config)})
+    (->> (env/get-nix-env-async {:nix-config      nix-path
+                                 :args            (:nix-args @config)
+                                 :nix-shell-path  (:nix-shell-path @config)
+                                 :use-flakes      (:use-flakes @config)
+                                 :flake-dev-shell (:flake-dev-shell @config)})
          (p/map (fn [env-vars]
                   (when env-vars
                     (env/set-current-env env-vars)
@@ -77,6 +80,35 @@
     (-> (:nix-file @config)
         (load-env-by-path status ctx))))
 
+(defn ^:private save-dev-shell! [shell-name]
+  (workspace/config-set! vscode-config
+                         :workspace
+                         :nix-env-selector/flake-dev-shell
+                         (or shell-name js/undefined)))
+
+(defn ^:private resolve-flake-dev-shell [nix-file]
+  (->> (env/list-flake-dev-shells {:nix-config     nix-file
+                                   :nix-shell-path (:nix-shell-path @config)})
+       (p/mapcat (fn [shell-names]
+                   (cond
+                     (empty? shell-names)
+                     (do
+                       (w/show-error-notification (-> l/lang :notification :no-dev-shells))
+                       (p/resolved nil))
+
+                     (= 1 (count shell-names))
+                     (do
+                       (logger/info (str "Single devShell found: " (first shell-names)))
+                       (p/resolved (first shell-names)))
+
+                     :else
+                     (->> (w/show-quick-pick
+                           {:place-holder (-> l/lang :label :select-dev-shell-placeholder)}
+                           (mapv (fn [name] {:id name :label name}) shell-names))
+                          (p/map (fn [picked]
+                                   (when (not-empty picked)
+                                     (:id picked))))))))))
+
 (defn select-nix-environment [status ctx]
   (logger/info "Running action: Select environment")
   (fn []
@@ -87,30 +119,45 @@
                                              (map (fn [file-name]
                                                     {:id    file-name
                                                      :label file-name}) %1))))
-         (p/map (fn [nix-file-name]
-                  (cond
-                    (= "disable" (:id nix-file-name))
-                    (do
-                      (logger/info "Disabling Nix environment")
-                      (status-bar/hide status)
-                      (vscode-ctx/clear-env-collection! ctx)
-                      (workspace/config-set! vscode-config
-                                             :workspace
-                                             :nix-env-selector/nix-file
-                                             js/undefined)
-                      (workspace/config-set! vscode-config
-                                             :workspace
-                                             :nix-env-selector/suggestion
-                                             false))
+         (p/mapcat (fn [nix-file-name]
+                     (cond
+                       (= "disable" (:id nix-file-name))
+                       (do
+                         (logger/info "Disabling Nix environment")
+                         (status-bar/hide status)
+                         (vscode-ctx/clear-env-collection! ctx)
+                         (workspace/config-set! vscode-config
+                                                :workspace
+                                                :nix-env-selector/nix-file
+                                                js/undefined)
+                         (save-dev-shell! nil)
+                         (workspace/config-set! vscode-config
+                                                :workspace
+                                                :nix-env-selector/suggestion
+                                                false)
+                         (p/resolved nil))
 
-                    (not-empty nix-file-name)
-                    (let [nix-file (str (:workspace-root @config) "/" (:id nix-file-name))]
-                      (logger/info (str "Selected Nix file: " nix-file))
-                      (workspace/config-set! vscode-config
-                                             :workspace
-                                             :nix-env-selector/nix-file
-                                             (unrender-workspace nix-file (:workspace-root @config)))
-                      nix-file))))
+                       (not-empty nix-file-name)
+                       (let [nix-file (str (:workspace-root @config) "/" (:id nix-file-name))]
+                         (logger/info (str "Selected Nix file: " nix-file))
+                         (workspace/config-set! vscode-config
+                                                :workspace
+                                                :nix-env-selector/nix-file
+                                                (unrender-workspace nix-file (:workspace-root @config)))
+                         (if (and (:use-flakes @config) (env/flake? nix-file))
+                           (->> (resolve-flake-dev-shell nix-file)
+                                (p/mapcat (fn [shell-name]
+                                            (->> (save-dev-shell! shell-name)
+                                                 (p/map (fn [_]
+                                                          (swap! config assoc :flake-dev-shell shell-name)
+                                                          nix-file))))))
+                           (->> (save-dev-shell! nil)
+                                (p/map (fn [_]
+                                         (swap! config assoc :flake-dev-shell nil)
+                                         nix-file)))))
+
+                       :else
+                       (p/resolved nil))))
          (p/mapcat #(load-env-by-path %1 status ctx))
          (p/error (fn [e]
                     (logger/error "Select environment failed" e)
