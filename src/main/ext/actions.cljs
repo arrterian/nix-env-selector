@@ -15,14 +15,16 @@
 (defn get-nix-files [workspace-root]
   (let [files-res (p/deferred)]
     (readdir workspace-root
+             #js {:withFileTypes true}
              (fn [err result]
                (if (nil? err)
                  (p/resolve! files-res result)
                  (p/reject! files-res err))))
-    (p/map #(filter (fn [file]
-                      (-> (re-matches #"(?i).*\.nix" file)
-                          (nil?)
-                          (not))) %1)
+    (p/map (fn [dirents]
+             (->> dirents
+                  (filter #(.isFile ^js %))
+                  (map #(.-name ^js %))
+                  (filter #(re-find #"(?i)\.nix$" %))))
            files-res)))
 
 (defn show-propose-env-dialog []
@@ -47,39 +49,52 @@
                  (cmd/execute-raw "workbench.action.reloadWindow"))
               (w/show-notification reload-message [reload-label]))))
 
-(defn load-env-by-path [nix-path status ctx]
-  (when nix-path
-    (logger/info (str "Loading environment from: " nix-path))
+(defn- handle-error [message]
+  (fn [e]
+    (logger/error message e)
+    (w/show-error-notification (-> l/lang :notification :env-error))))
+
+(defn- nix-env-options [nix-path]
+  {:nix-config     nix-path
+   :packages       (:nix-packages @config)
+   :args           (:nix-args @config)
+   :nix-shell-path (:nix-shell-path @config)
+   :use-flakes     (:use-flakes? @config)})
+
+(defn- has-env-source? [options]
+  (or (not-empty (:nix-config options))
+      (not-empty (:packages options))))
+
+(defn load-env [options status ctx]
+  (when (has-env-source? options)
+    (logger/info (str "Loading environment (nix-config=" (:nix-config options)
+                      ", packages=" (count (:packages options)) ")"))
     (status-bar/show {:text (-> l/lang :label :env-loading)}
                      status)
-    (->> (env/get-nix-env-async {:nix-config     nix-path
-                                 :args           (:nix-args @config)
-                                 :nix-shell-path (:nix-shell-path @config)
-                                 :use-flakes     (:use-flakes @config)})
+    (->> (env/get-nix-env-async options)
          (p/map (fn [env-vars]
                   (when env-vars
                     (env/set-current-env env-vars)
-                    (vscode-ctx/apply-env-collection! ctx env-vars)
-                    (logger/info (str "Applied " (count env-vars) " variables to extension host and terminal collection"))
+                    (if (:patch-terminals? @config)
+                      (do (vscode-ctx/apply-env-collection! ctx env-vars)
+                          (logger/info (str "Applied " (count env-vars) " variables to extension host and terminal collection")))
+                      (logger/info (str "Applied " (count env-vars) " variables to extension host (terminal patching disabled)")))
                     :ok)))
          (p/map (fn [result]
                   (when result
                     (status-bar/show {:text    (-> l/lang :label :env-need-reload)
                                       :command :nix-env-selector/select-env} status))))
          (p/mapcat show-reload-dialog)
-         (p/error (fn [e]
-                    (logger/error "Failed to load environment" e)
-                    (w/show-error-notification (-> l/lang :notification :env-error)))))))
+         (p/error (handle-error "Failed to load environment")))))
 
 (defn hit-nix-environment [status ctx]
-  (logger/info "Running action: Refresh environment")
   (fn []
-    (-> (:nix-file @config)
-        (load-env-by-path status ctx))))
+    (logger/info "Running action: Refresh environment")
+    (load-env (nix-env-options (:nix-file @config)) status ctx)))
 
 (defn select-nix-environment [status ctx]
-  (logger/info "Running action: Select environment")
   (fn []
+    (logger/info "Running action: Select environment")
     (->> (get-nix-files (:workspace-root @config))
          (p/mapcat #(w/show-quick-pick {:place-holder (-> l/lang :label :select-config-placeholder)}
                                        (into [{:id    "disable"
@@ -111,7 +126,5 @@
                                              :nix-env-selector/nix-file
                                              (unrender-workspace nix-file (:workspace-root @config)))
                       nix-file))))
-         (p/mapcat #(load-env-by-path %1 status ctx))
-         (p/error (fn [e]
-                    (logger/error "Select environment failed" e)
-                    (w/show-error-notification (-> l/lang :notification :env-error)))))))
+         (p/mapcat #(load-env (nix-env-options %1) status ctx))
+         (p/error (handle-error "Select environment failed")))))

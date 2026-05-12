@@ -4,16 +4,14 @@
 
 (set! *warn-on-infer* false)
 
-(defn create [aligment, priority]
+(defn create [alignment priority]
   (.createStatusBarItem window
-                        (cond
-                          (= :left aligment) 1
-                          (= :right aligment) 2
-                          :else 1)
+                        (case alignment
+                          :right 2
+                          1)
                         priority))
 
 (defn show [{:keys [text command]} status]
-  ;; (.hide status)
   (set! (.-text status) (clj->js text))
   (when command
     (set! (.-command status) (keyword-to-path command)))
