@@ -10,7 +10,7 @@
     (= target :global) 1
     (= target :workspace) 2
     (= target :workspace-folder) 3
-    :else (throw (js/Error "Wrong target for updating config."))))
+    :else (throw (js/Error. "Wrong target for updating config."))))
 
 (defn ^:private uri-to-string [js-uri]
   (.-path js-uri))

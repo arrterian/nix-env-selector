@@ -2,6 +2,45 @@
 
 All notable changes to the extension will be documented in this file.
 
+## [1.3.0]
+
+### Added
+
+- Status bar item is now an interactive entry point: clicking it opens an actions popup (Sync / Select / Disable / Show output channel), and hovering shows a rich Markdown tooltip with the current environment summary (status, source, path, flake shell, args, custom shell binary, log level, workspace)
+
+- Step-by-step env selection wizard invoked from the Select action (or `Nix-Env: Select environment`):
+  - Step 1 — always asks "flake" vs "nix-shell" vs "Disable" (current type marked); if neither type exists in the workspace, an informative "No .nix or flake.nix files found" notice is shown above Disable
+  - Step 2 — for flakes, lists devShells discovered via `nix flake show --json` (current shell marked); for nix-shell, lists `.nix` files (current file marked)
+  - Re-running the wizard is non-destructive: picking the currently-active selection is a no-op (no re-apply, no reload prompt)
+
+- Support for non-default flake devShells via the new `nixEnvSelector.flakeShell` setting; the active shell is passed through to `nix develop <dir>#<shell>` and surfaced in the tooltip
+
+- Auto-detection of flake vs nix-shell at selection time: when the user picks a file in the wizard, `nixEnvSelector.useFlakes` is set automatically based on the filename (`flake.nix` → `true`, anything else → `false`). The saved setting remains the source of truth between selections, keeping the config backward-compatible
+
+- New commands surfaced in the palette: `Nix-Env: Show environment actions`, `Nix-Env: Disable Nix environment`, `Nix-Env: Show output channel`
+
+### Changed
+
+- Status bar `$(beaker)` label and click target now route through the new actions popup
+- Output channel logging is more uniform: per-action `Running action: …` is logged at invocation time (was previously logged at activation)
+
+### Fixed
+
+- `cwd` is now actually passed to `child_process.exec`/`execSync` for nix invocations (was being silently dropped by `clj->js`, so relative `import ./*.nix` paths could resolve incorrectly)
+- `Nix-Env: Sync environment changes` now works for packages-only configs (previously was a no-op when only `nixEnvSelector.packages` was set)
+- Status bar item and log output channel are now registered as `ctx.subscriptions` disposables so they're cleaned up on extension deactivation
+- `parse-exported-vars` now logs a warning listing env vars dropped due to unparseable values (previously silent)
+- `showInformationMessage` is invoked with proper `this` binding (the detached `apply` call was technically incorrect even though it happened to work)
+- `get-nix-files` skips directories whose names end in `.nix` (only files are now listed in the picker)
+- Missing `:env-custom` localization key that could render as empty text on the status bar
+
+### Refactored
+
+- Substantial cleanup pass on the ClojureScript codebase: `defn-` shorthand, idiomatic `re-find` / `run!`, `^js` type hints in interop sites, dead code removed (`donate-url`, `vscode.env` namespace, unused lang keys, stale `src/dev`/`src/test` source paths)
+- `get-nix-env-sync` and `get-nix-env-async` share a common `prepare-invocation` preamble; config-rendering helper extracted; error tails consolidated into a single `handle-error`
+- `actions.cljs` reorganised top-down by dependency (no more forward `declare`)
+- Source files reformatted with `cljfmt` per the existing `.cljfmt.edn` rules
+
 ## [1.2.0]
 
 - Inject nix env vars into all terminal types (interactive shells, task runners, AI agent tools, test frameworks) using VS Code's `environmentVariableCollection` API [[ISSUE-31](https://github.com/arrterian/nix-env-selector/issues/31)] [[ISSUE-55](https://github.com/arrterian/nix-env-selector/issues/55)]

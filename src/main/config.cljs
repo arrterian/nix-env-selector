@@ -7,20 +7,22 @@
 
 (defonce vscode-config  (workspace/get-configuration))
 
+(defn- read-rendered [key root]
+  (when-let [v (workspace/config-get vscode-config key)]
+    (render-workspace v root)))
+
 (defn update-config! []
   (let [workspace-root (first (workspace/get-folders))]
-    (reset! config {:workspace-root workspace-root
-                    :nix-file       (-> (workspace/config-get vscode-config :nix-env-selector/nix-file)
-                                        (#(when %1 (render-workspace %1 workspace-root))))
-                    :suggest-nix?   (workspace/config-get vscode-config :nix-env-selector/suggestion)
-                    :nix-packages   (workspace/config-get vscode-config :nix-env-selector/packages)
-                    :nix-args       (-> (workspace/config-get vscode-config :nix-env-selector/args)
-                                        (#(when %1 (render-workspace %1 workspace-root))))
-                    :nix-shell-path (-> (workspace/config-get vscode-config :nix-env-selector/nix-shell-path)
-                                        (#(when %1 (render-workspace %1 workspace-root))))
-                    :use-flakes     (workspace/config-get vscode-config :nix-env-selector/use-flakes)
+    (reset! config {:workspace-root   workspace-root
+                    :nix-file         (read-rendered :nix-env-selector/nix-file workspace-root)
+                    :suggest-nix?     (workspace/config-get vscode-config :nix-env-selector/suggestion)
+                    :nix-packages     (workspace/config-get vscode-config :nix-env-selector/packages)
+                    :nix-args         (read-rendered :nix-env-selector/args workspace-root)
+                    :nix-shell-path   (read-rendered :nix-env-selector/nix-shell-path workspace-root)
+                    :use-flakes?      (workspace/config-get vscode-config :nix-env-selector/use-flakes)
+                    :flake-shell      (not-empty (workspace/config-get vscode-config :nix-env-selector/flake-shell))
                     :patch-terminals? (workspace/config-get vscode-config :nix-env-selector/patch-terminals)
-                    :log-level      (or (workspace/config-get vscode-config :nix-env-selector/log-level) "info")})))
+                    :log-level        (or (workspace/config-get vscode-config :nix-env-selector/log-level) "info")})))
 
 (workspace/on-config-change (fn []
                               (update-config!)

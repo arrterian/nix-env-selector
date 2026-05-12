@@ -1,7 +1,5 @@
 ;; shadow-cljs configuration
-{:source-paths ["src/dev"
-                "src/main"
-                "src/test"]
+{:source-paths ["src/main"]
  :dependencies [[camel-snake-kebab "0.4.2"]
                 [funcool/promesa "6.0.0"]]
  :builds {:extension

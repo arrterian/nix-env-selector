@@ -6,22 +6,21 @@
             [ext.lang :as l]
             [ext.constants :as constants]))
 
-(defn show-quick-pick [options items]
-  (let [pick-result (p/deferred)]
-    (-> (.showQuickPick window (clj->js' items) (clj->js' options))
-        (.then #(p/resolve! pick-result %1)
-               #(p/reject! pick-result %1)))
-    (p/chain pick-result
-             js->clj')))
+(defn- thenable->promise [thenable]
+  ;; promesa understands thenables natively; this is just for symmetry/typing.
+  (p/then thenable identity))
 
+(defn show-quick-pick [options items]
+  (-> (.showQuickPick window (clj->js' items) (clj->js' options))
+      (thenable->promise)
+      (p/then js->clj')))
 
 (defn show-notification [text items]
-  (let [pick-result (p/deferred)]
-    (-> (apply (.-showInformationMessage window) (clj->js' (into [text] items)))
-        (.then #(p/resolve! pick-result %1)
-               #(p/reject! pick-result %1)))
-    (p/chain pick-result
-             js->clj')))
+  (-> (.apply (.-showInformationMessage window)
+              window
+              (clj->js' (into [text] items)))
+      (thenable->promise)
+      (p/then js->clj')))
 
 
 (defn show-error-notification [text]

@@ -3,22 +3,21 @@
             [clojure.walk :refer [postwalk]]
             [goog.object :as obj]))
 
-(defn ^:private numeric-string? [s]
+(defn- numeric-string? [s]
   (and (string? s)
        (some? (re-matches #"[0-9]+" s))))
 
-(defn ^:private pascal-case? [s]
+(defn- pascal-case? [s]
   (and (string? s)
-       (contains? #{\A \B \C \D \E \F \G \H \I \J \K \L \M \N \O \P \Q \R \S \T \U \V \W \X \Y \Z}
-                  (first s))))
+       (some? (re-find #"^[A-Z]" s))))
 
-(defn ^:private key->str [k]
+(defn- key->str [k]
   (let [n (name k)]
-    (cond
-      (pascal-case? n) n
-      :else (->camelCaseString k))))
+    (if (pascal-case? n)
+      n
+      (->camelCaseString k))))
 
-(defn ^:private convert-map-keys [m f]
+(defn- convert-map-keys [m f]
   (postwalk (fn [x]
               (if (map-entry? x)
                 [(f (key x)) (val x)]
@@ -33,7 +32,7 @@
                                      (key->str k)
                                      k)))))
 
-(defn ^:private js-key->clj [k]
+(defn- js-key->clj [k]
   (cond
     (keyword? k) k
     (numeric-string? k) (js/parseInt k)

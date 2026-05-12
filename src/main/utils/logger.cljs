@@ -25,7 +25,7 @@
 
 (defn- write [level msg]
   (when (and (enabled? level) @ch)
-    (.appendLine @ch (str "[" (now) "] [" (.toUpperCase level) "] " msg))))
+    (.appendLine ^js @ch (str "[" (now) "] [" (.toUpperCase level) "] " msg))))
 
 (defn debug [msg]
   (write "debug" msg))

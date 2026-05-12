@@ -1,26 +1,77 @@
 (ns ext.nix-env
   (:require ["child_process" :refer [exec execSync]]
-            ["path" :refer [dirname]]
+            ["path" :refer [dirname basename]]
             [clojure.string :as s]
             [promesa.core :as p]
             [utils.logger :as logger]))
 
-(defn ^:private list-to-args [pref-arg list]
+(defn- list-to-args [pref-arg list]
   (s/join " " (map #(str pref-arg " " %1) list)))
 
-(defn ^:private has-flake? [dir]
-  (let [fs (js/require "fs")]
-    (try
-      (.existsSync fs (str dir "/flake.nix"))
-      (catch js/Error _
-        false))))
+(defn flake-path? [path]
+  (and (string? path)
+       (= "flake.nix" (basename path))))
 
-(defn ^:private build-nix-cmd [{:keys [options dir is-flake capture-env?]}]
-  (let [{:keys [nix-shell-path nix-config packages args]} options]
+(defn describe-source
+  "Inspect the workspace config and return a map describing the active env source.
+  :type is one of :flake, :nix-shell, :packages, :none."
+  [{:keys [nix-file nix-packages use-flakes?]}]
+  (let [nix-file (not-empty nix-file)
+        pkgs     (seq nix-packages)]
+    (cond
+      nix-file {:type (if use-flakes? :flake :nix-shell)
+                :path nix-file}
+      pkgs     {:type :packages :packages (vec pkgs)}
+      :else    {:type :none})))
+
+(defn list-flake-shells
+  "Run `nix flake show --json` in dir and return a promise resolving to a
+  deduplicated vector of devShell names. Resolves to [] on parse failure or
+  when the flake exposes no devShells. Rejects on nix command failure."
+  [dir]
+  (let [result (p/deferred)
+        cmd "nix flake show --json --no-write-lock-file"]
+    (logger/info (str "Running: " cmd " (cwd=" dir ")"))
+    (exec cmd
+          #js {:cwd dir}
+          (fn [err stdout stderr]
+            (if err
+              (do
+                (when (not-empty stderr) (logger/debug (str "stderr:\n" stderr)))
+                (logger/error "nix flake show failed" (js/Error. (or stderr (.-message err))))
+                (p/reject! result err))
+              (try
+                (let [parsed     (js/JSON.parse stdout)
+                      dev-shells (.-devShells parsed)]
+                  (if (nil? dev-shells)
+                    (p/resolve! result [])
+                    (let [systems (.keys js/Object dev-shells)
+                          names   (->> systems
+                                       (mapcat (fn [sys]
+                                                 (let [shells (aget dev-shells sys)]
+                                                   (.keys js/Object shells))))
+                                       distinct
+                                       vec)]
+                      (logger/info (str "Found " (count names) " flake devShell(s): "
+                                        (s/join ", " names)))
+                      (p/resolve! result names))))
+                (catch js/Error e
+                  (logger/error "Failed to parse flake show output" e)
+                  (p/resolve! result []))))))
+    result))
+
+(defn- flake-target
+  "Build the flake installable string `dir` or `dir#shell` for `nix develop`."
+  [dir flake-shell]
+  (let [shell (not-empty flake-shell)]
+    (str dir (when (and shell (not= shell "default")) (str "#" shell)))))
+
+(defn- build-nix-cmd [{:keys [options dir is-flake capture-env?]}]
+  (let [{:keys [nix-shell-path nix-config packages args flake-shell]} options]
     (if is-flake
       (str (if (empty? nix-shell-path) "nix" (s/replace nix-shell-path #" " "\\ "))
            " develop"
-           (when dir (str " \"" dir "\""))
+           (when dir (str " \"" (flake-target dir flake-shell) "\""))
            (when capture-env? " --command env")
            (when args (str " " args)))
       (str (if (empty? nix-shell-path) "nix-shell" (s/replace nix-shell-path #" " "\\ "))
@@ -32,45 +83,58 @@
            (when capture-env? " --run export")
            (when args (str " " args))))))
 
-(defn ^:private parse-exported-vars [output]
-  (->> (s/split output #"declare -x")
-       (filter not-empty)
-       (map #(-> (s/split (s/trim %1) #"=" 2)
-                 ((fn [[name value]]
-                    [name (try
-                            (js/JSON.parse value)
-                            (catch js/Error _ nil))]))))
-       (filter not-empty)))
+(defn- parse-exported-vars [output]
+  (let [entries (->> (s/split output #"declare -x")
+                     (map s/trim)
+                     (filter not-empty)
+                     (map (fn [entry]
+                            (let [[name value] (s/split entry #"=" 2)]
+                              [name (try
+                                      (js/JSON.parse value)
+                                      (catch js/Error _ ::parse-failed))]))))
+        failed  (filter (fn [[_ v]] (= v ::parse-failed)) entries)]
+    (when (seq failed)
+      (logger/warn (str "Dropped " (count failed)
+                        " env var(s) with unparseable values: "
+                        (s/join ", " (map first failed)))))
+    (->> entries
+         (remove (fn [[_ v]] (= v ::parse-failed))))))
 
-(defn ^:private parse-env-vars [output]
+(defn- parse-env-vars [output]
   (->> (s/split output #"\n")
        (filter not-empty)
        (map #(s/split %1 #"=" 2))
-       (filter #(= (count %) 2))
-       (map (fn [[name value]]
-              [name value]))))
+       (filter #(= (count %) 2))))
 
-(defn get-nix-env-sync [{:keys [use-flakes] :as options}]
-  (let [dir (dirname (:nix-config options))
-        is-flake (and use-flakes (has-flake? dir))
-        cmd (build-nix-cmd {:options options :dir dir :is-flake is-flake :capture-env? true})
-        parser (if is-flake parse-env-vars parse-exported-vars)]
-    (logger/info (str "Running (sync): " cmd))
-    (let [stdout (-> (execSync (clj->js cmd {:cwd dir}))
-                     (.toString))
-          result (parser stdout)]
+(defn- prepare-invocation
+  "Resolve dir, flake-vs-nix-shell mode, the command string, and the matching
+  parser. Returns a map with :dir :is-flake :cmd :parser."
+  [{:keys [use-flakes] :as options}]
+  (let [nix-config (:nix-config options)
+        dir        (when nix-config (dirname nix-config))
+        is-flake   (boolean use-flakes)]
+    {:dir      dir
+     :is-flake is-flake
+     :cmd      (build-nix-cmd {:options options :dir dir :is-flake is-flake :capture-env? true})
+     :parser   (if is-flake parse-env-vars parse-exported-vars)}))
+
+(defn- log-parsed [vars]
+  (logger/info (str "Parsed " (count vars) " environment variables"))
+  vars)
+
+(defn get-nix-env-sync [options]
+  (let [{:keys [dir is-flake cmd parser]} (prepare-invocation options)]
+    (logger/info (str "Running (sync, " (if is-flake "flake" "nix-shell") "): " cmd))
+    (let [stdout (.toString (execSync cmd #js {:cwd dir}))]
       (logger/debug (str "stdout:\n" stdout))
-      (logger/info (str "Parsed " (count result) " environment variables"))
-      result)))
+      (log-parsed (parser stdout)))))
 
-(defn get-nix-env-async [{:keys [use-flakes] :as options}]
-  (let [env-result (p/deferred)
-        dir (dirname (:nix-config options))
-        is-flake (and use-flakes (has-flake? dir))
-        cmd (build-nix-cmd {:options options :dir dir :is-flake is-flake :capture-env? true})
-        parser (if is-flake parse-env-vars parse-exported-vars)]
+(defn get-nix-env-async [options]
+  (let [{:keys [dir is-flake cmd parser]} (prepare-invocation options)
+        env-result (p/deferred)]
     (logger/info (str "Running (" (if is-flake "flake" "nix-shell") "): " cmd))
-    (exec (clj->js cmd {:cwd dir})
+    (exec cmd
+          #js {:cwd dir}
           (fn [err result stderr]
             (if (nil? err)
               (do
@@ -83,13 +147,9 @@
                 (logger/debug (str "stderr:\n" stderr))
                 (logger/error "nix command failed" (js/Error. stderr))
                 (p/reject! env-result err)))))
-    (p/map (fn [raw]
-             (let [vars (parser raw)]
-               (logger/info (str "Parsed " (count vars) " environment variables"))
-               vars))
-           env-result)))
+    (p/map (comp log-parsed parser) env-result)))
 
 (defn set-current-env [env-vars]
-  (mapv (fn [[name value]]
+  (run! (fn [[name value]]
           (aset js/process.env name value))
         env-vars))

@@ -2,7 +2,7 @@
   (:require [config :refer [config update-config!]]
             [promesa.core :as p]
             [vscode.status-bar :as status]
-            [vscode.context :refer [subscribe apply-env-collection!]]
+            [vscode.context :refer [subscribe apply-env-collection! clear-env-collection!]]
             [vscode.command :as cmd]
             [vscode.window :as w]
             [ext.actions :as act]
@@ -14,25 +14,35 @@
 (defn activate [ctx]
   (let [log-channel (w/create-log-output-channel)]
     (logger/init! log-channel)
+    (subscribe ctx log-channel)
     (update-config!)
     (logger/set-level! (:log-level @config))
     (logger/info (str "Log level: " (:log-level @config)))
     (logger/info "Initializing config...")
     (logger/info (str "Loaded config: " @config))
+    (when-not (:patch-terminals? @config)
+      ;; Drop any persisted terminal env from a previous session where
+      ;; patchTerminals was enabled, so the user's opt-out takes effect.
+      (clear-env-collection! ctx))
     (let [status-bar (status/create :left 100)]
+      (subscribe ctx status-bar)
       (if (or (not-empty (:nix-file @config)) (not-empty (:nix-packages @config)))
         (try
           (let [env-vars (env/get-nix-env-sync {:nix-config     (:nix-file @config)
                                                 :packages       (:nix-packages @config)
                                                 :args           (:nix-args @config)
                                                 :nix-shell-path (:nix-shell-path @config)
-                                                :use-flakes     (:use-flakes @config)})]
+                                                :use-flakes     (:use-flakes? @config)
+                                                :flake-shell    (:flake-shell @config)})]
             (env/set-current-env env-vars)
-            (apply-env-collection! ctx env-vars)
-            (logger/info (str "Applied " (count env-vars) " variables to extension host and terminal collection")))
+            (if (:patch-terminals? @config)
+              (do (apply-env-collection! ctx env-vars)
+                  (logger/info (str "Applied " (count env-vars) " variables to extension host and terminal collection")))
+              (logger/info (str "Applied " (count env-vars) " variables to extension host (terminal patching disabled)"))))
           (->> status-bar
-              (status/show {:text    (render-env-status lang (:nix-file @config))
-                            :command :nix-env-selector/select-env}))
+               (status/show {:text    (render-env-status lang (:nix-file @config))
+                             :command :nix-env-selector/show-actions
+                             :tooltip (act/build-tooltip-markdown @config)}))
           (catch :default e
             (logger/error "Failed to apply environment on startup" e)
             (w/show-error-notification (-> lang :notification :env-error))))
@@ -40,12 +50,15 @@
         ;; show notification that nix config available
         ;; if workspace contains .nix file(s)
         (p/chain (act/get-nix-files (:workspace-root @config))
-                #(when (and (:suggest-nix? @config)
-                            (> (count %1) 0))
+                 #(when (and (:suggest-nix? @config)
+                             (> (count %1) 0))
                     (act/show-propose-env-dialog))))
 
       ;; register user commands
       (subscribe ctx (cmd/create :nix-env-selector/select-env (act/select-nix-environment status-bar ctx)))
-      (subscribe ctx (cmd/create :nix-env-selector/hit-env (act/hit-nix-environment status-bar ctx))))))
+      (subscribe ctx (cmd/create :nix-env-selector/hit-env (act/hit-nix-environment status-bar ctx)))
+      (subscribe ctx (cmd/create :nix-env-selector/show-actions (act/show-actions status-bar ctx)))
+      (subscribe ctx (cmd/create :nix-env-selector/disable (act/disable-nix-environment-command status-bar ctx)))
+      (subscribe ctx (cmd/create :nix-env-selector/show-logs (act/show-logs-command))))))
 
 (defn deactivate [])

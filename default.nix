@@ -4,6 +4,7 @@ let
   nixPackages = [
     nodejs_22
     jdk17
+    cljfmt
   ];
 in
 pkgs.stdenv.mkDerivation {
