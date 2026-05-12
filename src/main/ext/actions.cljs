@@ -68,7 +68,10 @@
   (logger/info "Disabling Nix environment")
   (status-bar/hide status)
   (vscode-ctx/clear-env-collection! ctx)
+  (swap! config assoc :nix-file nil :use-flakes? false :flake-shell nil)
   (workspace/config-set! vscode-config :workspace :nix-env-selector/nix-file js/undefined)
+  (workspace/config-set! vscode-config :workspace :nix-env-selector/use-flakes js/undefined)
+  (workspace/config-set! vscode-config :workspace :nix-env-selector/flake-shell js/undefined)
   (workspace/config-set! vscode-config :workspace :nix-env-selector/suggestion false))
 
 (defn disable-nix-environment-command [status ctx]
