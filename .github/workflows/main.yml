@@ -19,9 +19,15 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 17
-    - name: install and build
-      run: |
-        npm install
-        npm run compile
+    - name: install
+      run: npm install
+      env:
+        CI: true
+    - name: test
+      run: npm test
+      env:
+        CI: true
+    - name: build
+      run: npm run compile
       env:
         CI: true

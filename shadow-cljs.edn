@@ -1,5 +1,5 @@
 ;; shadow-cljs configuration
-{:source-paths ["src/main"]
+{:source-paths ["src/main" "src/test"]
  :dependencies [[camel-snake-kebab "0.4.2"]
                 [funcool/promesa "6.0.0"]]
  :builds {:extension
@@ -8,4 +8,12 @@
            :release    {:compiler-options {:optimizations :simple}}
            :modules    {:main {:exports {:activate   main/activate
                                          :deactivate main/deactivate}}}
-           :js-options {:js-provider :import}}}}
+           :js-options {:js-provider :import}}
+
+          :test
+          {:target     :node-test
+           :output-to  ".shadow-cljs/test.js"
+           :ns-regexp  "-test$"
+           :autorun    true
+           :js-options {:resolve {"vscode" {:target :file
+                                            :file   "src/test/mocks/vscode.js"}}}}}}

@@ -117,8 +117,9 @@
 		"bundle": "esbuild --bundle dist/main.js --outfile=dist/index.js --external:vscode --platform=node --format=cjs --loader:.svg=file && rm dist/main.js",
 		"compile": "shadow-cljs release extension && npm run bundle",
 		"watch": "shadow-cljs watch extension",
-		"format": "cljfmt fix src/main",
-		"format:check": "cljfmt check src/main"
+		"test": "shadow-cljs compile test",
+		"format": "cljfmt fix src/main src/test",
+		"format:check": "cljfmt check src/main src/test"
 	},
 	"devDependencies": {
 		"@types/vscode": "^1.97.0",
