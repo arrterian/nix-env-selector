@@ -40,9 +40,9 @@
                   (logger/info (str "Applied " (count env-vars) " variables to extension host and terminal collection")))
               (logger/info (str "Applied " (count env-vars) " variables to extension host (terminal patching disabled)"))))
           (->> status-bar
-              (status/show {:text    (render-env-status lang (:nix-file @config))
-                            :command :nix-env-selector/show-info
-                            :tooltip (act/build-tooltip-markdown @config)}))
+               (status/show {:text    (render-env-status lang (:nix-file @config))
+                             :command :nix-env-selector/show-actions
+                             :tooltip (act/build-tooltip-markdown @config)}))
           (catch :default e
             (logger/error "Failed to apply environment on startup" e)
             (w/show-error-notification (-> lang :notification :env-error))))
@@ -50,16 +50,15 @@
         ;; show notification that nix config available
         ;; if workspace contains .nix file(s)
         (p/chain (act/get-nix-files (:workspace-root @config))
-                #(when (and (:suggest-nix? @config)
-                            (> (count %1) 0))
+                 #(when (and (:suggest-nix? @config)
+                             (> (count %1) 0))
                     (act/show-propose-env-dialog))))
 
       ;; register user commands
       (subscribe ctx (cmd/create :nix-env-selector/select-env (act/select-nix-environment status-bar ctx)))
       (subscribe ctx (cmd/create :nix-env-selector/hit-env (act/hit-nix-environment status-bar ctx)))
-      (subscribe ctx (cmd/create :nix-env-selector/show-info (act/show-info status-bar ctx)))
+      (subscribe ctx (cmd/create :nix-env-selector/show-actions (act/show-actions status-bar ctx)))
       (subscribe ctx (cmd/create :nix-env-selector/disable (act/disable-nix-environment-command status-bar ctx)))
-      (subscribe ctx (cmd/create :nix-env-selector/show-logs (act/show-logs-command)))
-      (subscribe ctx (cmd/create :nix-env-selector/select-flake-shell (act/select-flake-shell status-bar ctx))))))
+      (subscribe ctx (cmd/create :nix-env-selector/show-logs (act/show-logs-command))))))
 
 (defn deactivate [])

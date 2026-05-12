@@ -1,6 +1,6 @@
 (ns ext.nix-env
   (:require ["child_process" :refer [exec execSync]]
-            ["path" :refer [dirname]]
+            ["path" :refer [dirname basename]]
             [clojure.string :as s]
             [promesa.core :as p]
             [utils.logger :as logger]))
@@ -8,12 +8,9 @@
 (defn- list-to-args [pref-arg list]
   (s/join " " (map #(str pref-arg " " %1) list)))
 
-(defn flake-dir? [dir]
-  (let [fs (js/require "fs")]
-    (try
-      (.existsSync fs (str dir "/flake.nix"))
-      (catch js/Error _
-        false))))
+(defn flake-path? [path]
+  (and (string? path)
+       (= "flake.nix" (basename path))))
 
 (defn describe-source
   "Inspect the workspace config and return a map describing the active env source.
@@ -22,10 +19,8 @@
   (let [nix-file (not-empty nix-file)
         pkgs     (seq nix-packages)]
     (cond
-      nix-file (let [dir (dirname nix-file)
-                     flake? (and use-flakes? (flake-dir? dir))]
-                 {:type (if flake? :flake :nix-shell)
-                  :path nix-file})
+      nix-file {:type (if use-flakes? :flake :nix-shell)
+                :path nix-file}
       pkgs     {:type :packages :packages (vec pkgs)}
       :else    {:type :none})))
 
@@ -115,8 +110,9 @@
   "Resolve dir, flake-vs-nix-shell mode, the command string, and the matching
   parser. Returns a map with :dir :is-flake :cmd :parser."
   [{:keys [use-flakes] :as options}]
-  (let [dir      (dirname (:nix-config options))
-        is-flake (and use-flakes (flake-dir? dir))]
+  (let [nix-config (:nix-config options)
+        dir        (when nix-config (dirname nix-config))
+        is-flake   (boolean use-flakes)]
     {:dir      dir
      :is-flake is-flake
      :cmd      (build-nix-cmd {:options options :dir dir :is-flake is-flake :capture-env? true})

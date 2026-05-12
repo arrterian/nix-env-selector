@@ -27,6 +27,10 @@
                   :info-shell-path           "nix-shell binary"
                   :info-flakes               "Use flakes"
                   :info-terminals            "Patch terminals"
+                  :type-picker-placeholder   "Select environment type"
+                  :type-picker-flake         "$(symbol-snippet) Use flake.nix"
+                  :type-picker-nix-shell     "$(file-code) Use a nix-shell config"
+                  :type-picker-no-files      "No .nix or flake.nix files found in workspace"
                   :info-log-level            "Log level"
                   :info-workspace            "Workspace"
                   :info-on                   "On"
@@ -43,7 +47,6 @@
                   :flake-shell-list-failed   "Failed to list flake devShells. See output channel for details."
                   :action-sync               "$(sync) Sync environment"
                   :action-select             "$(list-flat) Select a different environment"
-                  :action-flake-shell        "$(symbol-snippet) Select flake devShell"
                   :action-disable            "$(circle-slash) Disable Nix environment"
                   :action-show-logs          "$(output) Show output channel"}})
 
