@@ -2,6 +2,16 @@
 
 All notable changes to the extension will be documented in this file.
 
+## [1.3.1]
+
+### Fixed
+
+- After disabling the environment, re-selecting a flake was effectively a no-op: the previously-selected `flakeShell` and `useFlakes` settings persisted in workspace config, the shell picker still pre-marked the prior shell as "current", and a stale in-memory config could trip the "unchanged selection, skipping re-apply" guard. `Nix-Env: Disable Nix environment` now clears `nixEnvSelector.useFlakes` and `nixEnvSelector.flakeShell` alongside `nixEnvSelector.nixFile`, and synchronously resets the in-memory config so the next selection always re-applies cleanly
+
+### Added
+
+- shadow-cljs `:node-test` build and `npm test` script covering `utils.helpers`, `ext.nix-env` (including the private command builder and env parsers), and the pure picker helpers in `ext.actions`;
+
 ## [1.3.0]
 
 ### Added
