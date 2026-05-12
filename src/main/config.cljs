@@ -20,6 +20,7 @@
                     :nix-args         (read-rendered :nix-env-selector/args workspace-root)
                     :nix-shell-path   (read-rendered :nix-env-selector/nix-shell-path workspace-root)
                     :use-flakes?      (workspace/config-get vscode-config :nix-env-selector/use-flakes)
+                    :flake-shell      (not-empty (workspace/config-get vscode-config :nix-env-selector/flake-shell))
                     :patch-terminals? (workspace/config-get vscode-config :nix-env-selector/patch-terminals)
                     :log-level        (or (workspace/config-get vscode-config :nix-env-selector/log-level) "info")})))
 

@@ -8,19 +8,75 @@
 (defn- list-to-args [pref-arg list]
   (s/join " " (map #(str pref-arg " " %1) list)))
 
-(defn- has-flake? [dir]
+(defn flake-dir? [dir]
   (let [fs (js/require "fs")]
     (try
       (.existsSync fs (str dir "/flake.nix"))
       (catch js/Error _
         false))))
 
+(defn describe-source
+  "Inspect the workspace config and return a map describing the active env source.
+  :type is one of :flake, :nix-shell, :packages, :none."
+  [{:keys [nix-file nix-packages use-flakes?]}]
+  (let [nix-file (not-empty nix-file)
+        pkgs     (seq nix-packages)]
+    (cond
+      nix-file (let [dir (dirname nix-file)
+                     flake? (and use-flakes? (flake-dir? dir))]
+                 {:type (if flake? :flake :nix-shell)
+                  :path nix-file})
+      pkgs     {:type :packages :packages (vec pkgs)}
+      :else    {:type :none})))
+
+(defn list-flake-shells
+  "Run `nix flake show --json` in dir and return a promise resolving to a
+  deduplicated vector of devShell names. Resolves to [] on parse failure or
+  when the flake exposes no devShells. Rejects on nix command failure."
+  [dir]
+  (let [result (p/deferred)
+        cmd "nix flake show --json --no-write-lock-file"]
+    (logger/info (str "Running: " cmd " (cwd=" dir ")"))
+    (exec cmd
+          #js {:cwd dir}
+          (fn [err stdout stderr]
+            (if err
+              (do
+                (when (not-empty stderr) (logger/debug (str "stderr:\n" stderr)))
+                (logger/error "nix flake show failed" (js/Error. (or stderr (.-message err))))
+                (p/reject! result err))
+              (try
+                (let [parsed     (js/JSON.parse stdout)
+                      dev-shells (.-devShells parsed)]
+                  (if (nil? dev-shells)
+                    (p/resolve! result [])
+                    (let [systems (.keys js/Object dev-shells)
+                          names   (->> systems
+                                       (mapcat (fn [sys]
+                                                 (let [shells (aget dev-shells sys)]
+                                                   (.keys js/Object shells))))
+                                       distinct
+                                       vec)]
+                      (logger/info (str "Found " (count names) " flake devShell(s): "
+                                        (s/join ", " names)))
+                      (p/resolve! result names))))
+                (catch js/Error e
+                  (logger/error "Failed to parse flake show output" e)
+                  (p/resolve! result []))))))
+    result))
+
+(defn- flake-target
+  "Build the flake installable string `dir` or `dir#shell` for `nix develop`."
+  [dir flake-shell]
+  (let [shell (not-empty flake-shell)]
+    (str dir (when (and shell (not= shell "default")) (str "#" shell)))))
+
 (defn- build-nix-cmd [{:keys [options dir is-flake capture-env?]}]
-  (let [{:keys [nix-shell-path nix-config packages args]} options]
+  (let [{:keys [nix-shell-path nix-config packages args flake-shell]} options]
     (if is-flake
       (str (if (empty? nix-shell-path) "nix" (s/replace nix-shell-path #" " "\\ "))
            " develop"
-           (when dir (str " \"" dir "\""))
+           (when dir (str " \"" (flake-target dir flake-shell) "\""))
            (when capture-env? " --command env")
            (when args (str " " args)))
       (str (if (empty? nix-shell-path) "nix-shell" (s/replace nix-shell-path #" " "\\ "))
@@ -60,7 +116,7 @@
   parser. Returns a map with :dir :is-flake :cmd :parser."
   [{:keys [use-flakes] :as options}]
   (let [dir      (dirname (:nix-config options))
-        is-flake (and use-flakes (has-flake? dir))]
+        is-flake (and use-flakes (flake-dir? dir))]
     {:dir      dir
      :is-flake is-flake
      :cmd      (build-nix-cmd {:options options :dir dir :is-flake is-flake :capture-env? true})

@@ -65,6 +65,11 @@
           "default": false,
           "description": "Enable support for Nix flakes"
         },
+        "nixEnvSelector.flakeShell": {
+          "type": "string",
+          "default": null,
+          "description": "Name of the flake devShell to enter. When unset (or set to 'default'), uses devShells.<system>.default. Set this when your flake exposes multiple devShells (e.g. 'tests', 'ci')."
+        },
         "nixEnvSelector.patchTerminals": {
           "type": "boolean",
           "default": true,
@@ -92,6 +97,22 @@
 			{
 				"command": "nixEnvSelector.hitEnv",
 				"title": "Nix-Env: Sync environment changes"
+			},
+			{
+				"command": "nixEnvSelector.showInfo",
+				"title": "Nix-Env: Show environment info"
+			},
+			{
+				"command": "nixEnvSelector.disable",
+				"title": "Nix-Env: Disable Nix environment"
+			},
+			{
+				"command": "nixEnvSelector.showLogs",
+				"title": "Nix-Env: Show output channel"
+			},
+			{
+				"command": "nixEnvSelector.selectFlakeShell",
+				"title": "Nix-Env: Select flake devShell"
 			}
 		]
 	},

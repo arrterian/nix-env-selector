@@ -32,7 +32,8 @@
                                                 :packages       (:nix-packages @config)
                                                 :args           (:nix-args @config)
                                                 :nix-shell-path (:nix-shell-path @config)
-                                                :use-flakes     (:use-flakes? @config)})]
+                                                :use-flakes     (:use-flakes? @config)
+                                                :flake-shell    (:flake-shell @config)})]
             (env/set-current-env env-vars)
             (if (:patch-terminals? @config)
               (do (apply-env-collection! ctx env-vars)
@@ -40,7 +41,8 @@
               (logger/info (str "Applied " (count env-vars) " variables to extension host (terminal patching disabled)"))))
           (->> status-bar
               (status/show {:text    (render-env-status lang (:nix-file @config))
-                            :command :nix-env-selector/select-env}))
+                            :command :nix-env-selector/show-info
+                            :tooltip (act/build-tooltip-markdown @config)}))
           (catch :default e
             (logger/error "Failed to apply environment on startup" e)
             (w/show-error-notification (-> lang :notification :env-error))))
@@ -54,6 +56,10 @@
 
       ;; register user commands
       (subscribe ctx (cmd/create :nix-env-selector/select-env (act/select-nix-environment status-bar ctx)))
-      (subscribe ctx (cmd/create :nix-env-selector/hit-env (act/hit-nix-environment status-bar ctx))))))
+      (subscribe ctx (cmd/create :nix-env-selector/hit-env (act/hit-nix-environment status-bar ctx)))
+      (subscribe ctx (cmd/create :nix-env-selector/show-info (act/show-info status-bar ctx)))
+      (subscribe ctx (cmd/create :nix-env-selector/disable (act/disable-nix-environment-command status-bar ctx)))
+      (subscribe ctx (cmd/create :nix-env-selector/show-logs (act/show-logs-command)))
+      (subscribe ctx (cmd/create :nix-env-selector/select-flake-shell (act/select-flake-shell status-bar ctx))))))
 
 (defn deactivate [])
