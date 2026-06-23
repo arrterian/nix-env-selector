@@ -60,33 +60,38 @@
 					"default": null,
 					"description": "Custom path to nix-shell executable"
 				},
-        "nixEnvSelector.useFlakes": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable support for Nix flakes"
-        },
-        "nixEnvSelector.flakeShell": {
-          "type": "string",
-          "default": null,
-          "description": "Name of the flake devShell to enter. When unset (or set to 'default'), uses devShells.<system>.default. Set this when your flake exposes multiple devShells (e.g. 'tests', 'ci')."
-        },
-        "nixEnvSelector.patchTerminals": {
-          "type": "boolean",
-          "default": true,
-          "description": "Automatically open new user terminals inside nix-shell"
-        },
-        "nixEnvSelector.logLevel": {
-          "type": "string",
-          "default": "info",
-          "enum": ["debug", "info", "warn", "error"],
-          "enumDescriptions": [
-            "Verbose output including raw stdout/stderr from nix commands",
-            "Normal operational messages (default)",
-            "Warnings only",
-            "Errors only"
-          ],
-          "description": "Controls the verbosity of the Nix Env Selector output channel"
-        }
+				"nixEnvSelector.useFlakes": {
+					"type": "boolean",
+					"default": false,
+					"description": "Enable support for Nix flakes"
+				},
+				"nixEnvSelector.flakeShell": {
+					"type": "string",
+					"default": null,
+					"description": "Name of the flake devShell to enter. When unset (or set to 'default'), uses devShells.<system>.default. Set this when your flake exposes multiple devShells (e.g. 'tests', 'ci')."
+				},
+				"nixEnvSelector.patchTerminals": {
+					"type": "boolean",
+					"default": true,
+					"description": "Automatically open new user terminals inside nix-shell"
+				},
+				"nixEnvSelector.logLevel": {
+					"type": "string",
+					"default": "info",
+					"enum": [
+						"debug",
+						"info",
+						"warn",
+						"error"
+					],
+					"enumDescriptions": [
+						"Verbose output including raw stdout/stderr from nix commands",
+						"Normal operational messages (default)",
+						"Warnings only",
+						"Errors only"
+					],
+					"description": "Controls the verbosity of the Nix Env Selector output channel"
+				}
 			}
 		},
 		"commands": [
@@ -124,6 +129,7 @@
 	"devDependencies": {
 		"@types/vscode": "^1.97.0",
 		"@vscode/test-electron": "^2.4.1",
+		"@vscode/vsce": "^3.9.1",
 		"esbuild": "^0.25.0",
 		"shadow-cljs": "2.28.21"
 	}
