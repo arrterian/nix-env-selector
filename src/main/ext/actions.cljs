@@ -2,7 +2,7 @@
   (:require ["fs" :refer [readdir]]
             ["path" :refer [dirname basename]]
             [clojure.string :as s]
-            [config :refer [config vscode-config]]
+            [config :refer [config get-vscode-config]]
             [vscode.window :as w]
             [vscode.command :as cmd]
             [vscode.workspace :as workspace]
@@ -42,7 +42,7 @@
                  (= select-label %1)  (do (logger/info "User chose to select Nix environment")
                                           (cmd/execute :nix-env-selector/select-env))
                  (= dismiss-label %1) (do (logger/info "User dismissed Nix environment suggestion")
-                                          (workspace/config-set! vscode-config
+                                          (workspace/config-set! (get-vscode-config)
                                                                  :workspace
                                                                  :nix-env-selector/suggestion
                                                                  false)))
@@ -68,11 +68,12 @@
   (logger/info "Disabling Nix environment")
   (status-bar/hide status)
   (vscode-ctx/clear-env-collection! ctx)
-  (swap! config assoc :nix-file nil :use-flakes? false :flake-shell nil)
-  (workspace/config-set! vscode-config :workspace :nix-env-selector/nix-file js/undefined)
-  (workspace/config-set! vscode-config :workspace :nix-env-selector/use-flakes js/undefined)
-  (workspace/config-set! vscode-config :workspace :nix-env-selector/flake-shell js/undefined)
-  (workspace/config-set! vscode-config :workspace :nix-env-selector/suggestion false))
+  (let [vscode-config (get-vscode-config)]
+    (swap! config assoc :nix-file nil :use-flakes? false :flake-shell nil)
+    (workspace/config-set! vscode-config :workspace :nix-env-selector/nix-file js/undefined)
+    (workspace/config-set! vscode-config :workspace :nix-env-selector/use-flakes js/undefined)
+    (workspace/config-set! vscode-config :workspace :nix-env-selector/flake-shell js/undefined)
+    (workspace/config-set! vscode-config :workspace :nix-env-selector/suggestion false)))
 
 (defn disable-nix-environment-command [status ctx]
   (fn []
@@ -192,13 +193,13 @@
 ;; ---------------------------------------------------------------------------
 
 (defn- save-flake-shell! [shell-name]
-  (workspace/config-set! vscode-config
+  (workspace/config-set! (get-vscode-config)
                          :workspace
                          :nix-env-selector/flake-shell
                          (or shell-name js/undefined)))
 
 (defn- save-nix-file! [path]
-  (workspace/config-set! vscode-config
+  (workspace/config-set! (get-vscode-config)
                          :workspace
                          :nix-env-selector/nix-file
                          (if path
@@ -206,7 +207,7 @@
                            js/undefined)))
 
 (defn- save-use-flakes! [use-flakes?]
-  (workspace/config-set! vscode-config
+  (workspace/config-set! (get-vscode-config)
                          :workspace
                          :nix-env-selector/use-flakes
                          (boolean use-flakes?)))
