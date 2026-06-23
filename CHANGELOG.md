@@ -8,10 +8,6 @@ All notable changes to the extension will be documented in this file.
 
 - Config was not loaded in VSCode Remote Development: `vscode-config` was evaluated via `defonce` at module load time, before `activate()` ran, so in Remote Development the workspace-folder-level settings were not yet available and the cached `WorkspaceConfiguration` only returned `package.json` defaults. `update-config!` now calls `workspace.getConfiguration()` fresh on every invocation (#110)
 
-### Changed
-
-- `default.nix` now builds the `.vsix` directly via `nix-build`, and the build-tools nixpkgs pin was bumped from 24.05 to 25.11 (#111)
-
 ## [1.3.1]
 
 ### Fixed
