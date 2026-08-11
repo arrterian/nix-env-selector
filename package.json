@@ -130,7 +130,7 @@
 		"@types/vscode": "^1.97.0",
 		"@vscode/test-electron": "^2.4.1",
 		"@vscode/vsce": "^3.9.1",
-		"esbuild": "^0.25.0",
+		"esbuild": "^0.28.1",
 		"shadow-cljs": "2.28.21"
 	}
 }
